@@ -5,7 +5,7 @@ go 1.25.8
 require (
 	github.com/modelcontextprotocol/go-sdk v1.5.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
-	golang.org/x/text v0.14.0
+	golang.org/x/text v0.36.0
 )
 
 require (
