@@ -10,6 +10,8 @@
 FROM golang:1.26.2-alpine AS build
 WORKDIR /src
 
+RUN apk add --no-cache ca-certificates
+
 COPY go.mod go.sum ./
 RUN go mod download
 
@@ -21,6 +23,7 @@ RUN CGO_ENABLED=0 GOFLAGS=-trimpath go build \
       ./cmd/pt-techne-mcp-server
 
 FROM scratch
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /out/pt-techne-mcp-server /pt-techne-mcp-server
 USER 1000:1000
 ENTRYPOINT ["/pt-techne-mcp-server"]
