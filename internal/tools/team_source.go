@@ -1,7 +1,10 @@
-// Shared helpers for the read tools (lookup_user, list_teams, get_team,
-// find_repo). They all share the same shape: pin pt-logos main to a
-// commit SHA so every read in the request sees the same revision, list
-// teams/, fan out a bounded number of GetFile calls, parse, validate.
+// Reading teams/*.tfvars from osinfra-io/pt-logos@main.
+//
+// The four read tools (list_teams, get_team, lookup_user, find_repo)
+// share the same fetch shape: pin pt-logos main to a commit SHA so
+// every read in the same request sees the same revision, list the
+// teams/ directory, fan out a bounded number of GetFile calls, parse,
+// validate. This file owns that shape; tools just call into it.
 package tools
 
 import (
@@ -12,7 +15,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"golang.org/x/sync/errgroup"
 
 	gh "github.com/osinfra-io/pt-techne-mcp-server/internal/github"
@@ -28,19 +30,6 @@ const teamsDir = "teams"
 // team count is in single digits — and keeps us well clear of secondary
 // rate limits if the count grows.
 const readFanoutLimit = 8
-
-// notConfigured returns the standard not_configured opError result.
-func notConfigured(toolName string) *mcp.CallToolResult {
-	return errResult(opError{
-		Code:    "not_configured",
-		Message: toolName + " requires GITHUB_TOKEN; see README Configuration",
-	})
-}
-
-// notFound returns a not_found opError result.
-func notFound(message string) *mcp.CallToolResult {
-	return errResult(opError{Code: "not_found", Message: message})
-}
 
 // resolveBaseRef pins pt-logos@main to a commit SHA so every subsequent
 // read in the same request sees the same revision. Without this a
@@ -158,19 +147,4 @@ func fetchAllTeams(ctx context.Context, c gh.Client, v *spec.Validator, keys []s
 		return nil, apiError(err)
 	}
 	return teams, nil
-}
-
-// asJSON marshals v to a JSON map for embedding in tool output. Used by
-// get_team and find_repo to hand back spec/repository sub-objects in
-// the same shape callers send to validate/render.
-func asJSON(v any) (map[string]any, error) {
-	raw, err := json.Marshal(v)
-	if err != nil {
-		return nil, err
-	}
-	var out map[string]any
-	if err := json.Unmarshal(raw, &out); err != nil {
-		return nil, err
-	}
-	return out, nil
 }

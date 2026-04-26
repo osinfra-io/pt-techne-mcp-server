@@ -29,13 +29,15 @@ type LookupUserInput struct {
 // string so callers can filter or display them without re-parsing.
 //
 //	system     — "datadog" | "github" | "google" | "gke"
-//	scope      — "team-parent" | "team-child" | "basic" | "browser" |
-//	             "project-creator" | "xpn-admin" | "artifact-registry"
+//	scope      — "team"        (datadog parent team)
+//	             "team-parent" | "team-child" (github)
+//	             "basic" | "browser" | "project-creator" | "xpn-admin" (google)
+//	             "artifact-registry" (gke)
 //	subject    — for team-child: the child team key (e.g. "production-approvers")
 //	             for env-scoped google groups: "sandbox" | "non-production" | "production"
 //	             for google basic: "admin" | "reader" | "writer"
 //	             for gke artifact-registry: "readers" | "writers"
-//	             empty for github team-parent and datadog
+//	             empty for github team-parent and datadog team
 //	membership — datadog: "admin" | "member"
 //	             github : "maintainer" | "member"
 //	             google : "owner" | "manager" | "member"

@@ -159,8 +159,11 @@ func TestListTeams_Goldens(t *testing.T) {
 		if s.TeamKey != "pt-corpus" {
 			continue
 		}
-		if s.DisplayName != "Corpus" || s.TeamType != "platform-team" || s.RepoCount != 2 {
-			t.Fatalf("pt-corpus summary unexpected: %+v", s)
+		if s.DisplayName != "Corpus" || s.TeamType != "platform-team" {
+			t.Fatalf("pt-corpus identity unexpected: %+v", s)
+		}
+		if s.RepoCount != 2 || s.MemberCount != 1 || s.EnvCount != 9 {
+			t.Fatalf("pt-corpus counts unexpected: %+v (want repos=2 members=1 envs=9)", s)
 		}
 	}
 }

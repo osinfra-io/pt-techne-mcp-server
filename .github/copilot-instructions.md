@@ -47,10 +47,21 @@ The allowed list is fixed. Adding a dependency requires explicit discussion.
 
 - `github.com/modelcontextprotocol/go-sdk` — MCP transport + tool SDK.
 - `github.com/santhosh-tekuri/jsonschema/v6` — JSON Schema validation.
-- `github.com/google/go-github/v68` — GitHub PR creation (`open_team_pr`).
+- `github.com/google/go-github/v68` — GitHub PR creation (`open_team_pr`)
+  and the read tools.
 - `golang.org/x/oauth2` — static `TokenSource` for the pre-minted
   `GITHUB_TOKEN`. No JWT/installation-token library — token minting is
   the deployment's job.
+- `github.com/hashicorp/hcl/v2` and `github.com/zclconf/go-cty` — HCL2
+  parser used by `internal/spec/parse.go` to round-trip canonical
+  pt-logos `tfvars` back into a `spec.Team`. Using the upstream library
+  rather than hand-rolling a parser is the right trade: HCL2 is the
+  language pt-logos is written in, and the renderer's output is its
+  canonical subset, so any incompatibility would be a real bug we want
+  to surface.
+- `golang.org/x/sync` — `errgroup` for the bounded fan-out used by
+  `fetchAllTeams`. The standard library has no equivalent that combines
+  context cancellation, error propagation, and a goroutine limit.
 
 Tests use the standard library only — no testify, no mocking framework.
 

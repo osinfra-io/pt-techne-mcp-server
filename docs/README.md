@@ -63,7 +63,7 @@ diverge; `make sync-schema` updates the copy.
 
 `open_team_pr` is the only **writer**. The four readers — `list_teams`,
 `get_team`, `lookup_user`, `find_repo` — share a common shape implemented
-in `internal/tools/read_helpers.go`:
+in `internal/tools/team_source.go`:
 
 1. `listTeamFiles` — `ListDir teams/` on `pt-logos@main`.
 2. `fetchAllTeams` — bounded-concurrency fan-out (`errgroup` with
