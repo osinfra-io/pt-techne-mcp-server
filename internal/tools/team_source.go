@@ -9,7 +9,6 @@ package tools
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -62,7 +61,7 @@ func listTeamFiles(ctx context.Context, c gh.Client, ref string) ([]string, *opE
 	if !exists {
 		return nil, &opError{
 			Code:    "source_parse_error",
-			Message: teamsDir + "/ directory missing on " + gh.Base,
+			Message: teamsDir + "/ directory missing at " + ref,
 		}
 	}
 	keys := make([]string, 0, len(names))
@@ -95,13 +94,9 @@ func fetchTeam(ctx context.Context, c gh.Client, v *spec.Validator, key, ref str
 	}
 	// Round-trip through JSON so the validator sees the same shape it
 	// would for an agent-supplied spec.
-	raw, err := json.Marshal(team)
+	generic, err := asJSON(team)
 	if err != nil {
-		return nil, &opError{Code: "source_parse_error", Message: path + ": marshal: " + err.Error()}
-	}
-	var generic map[string]any
-	if err := json.Unmarshal(raw, &generic); err != nil {
-		return nil, &opError{Code: "source_parse_error", Message: path + ": remarshal: " + err.Error()}
+		return nil, &opError{Code: "source_parse_error", Message: path + ": " + err.Error()}
 	}
 	if errs := v.Validate(generic); len(errs) > 0 {
 		return nil, &opError{

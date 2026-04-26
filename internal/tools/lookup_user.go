@@ -64,6 +64,10 @@ func LookupUser(s *mcp.Server, v *spec.Validator, c gh.Client) {
 		if c == nil {
 			return notConfigured("lookup_user"), nil, nil
 		}
+		// Trim whitespace so " " is treated as empty for the XOR check
+		// rather than passing validation and triggering a full repo scan.
+		in.GitHubUsername = strings.TrimSpace(in.GitHubUsername)
+		in.Email = strings.TrimSpace(in.Email)
 		if (in.GitHubUsername == "") == (in.Email == "") {
 			return errResult(opError{
 				Code:    "invalid_input",
