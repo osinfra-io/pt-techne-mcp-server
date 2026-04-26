@@ -69,7 +69,7 @@ Add this entry to your MCP client config (e.g. `.copilot/mcp.json`,
 ```json
 {
   "mcpServers": {
-    "platform": {
+    "pt-techne-mcp-server": {
       "command": "docker",
       "args": [
         "run", "-i", "--rm",
@@ -80,10 +80,10 @@ Add this entry to your MCP client config (e.g. `.copilot/mcp.json`,
 }
 ```
 
-The pt-logos team-management agent calls `platform/render_team_tfvars` instead
-of writing HCL itself, then `platform/open_team_pr` to ship the change as a
-PR. Agents that only need to validate user input call
-`platform/validate_team_spec`.
+The pt-logos team-management agent calls `pt-techne-mcp-server/render_team_tfvars`
+instead of writing HCL itself, then `pt-techne-mcp-server/open_team_pr` to ship
+the change as a PR. Agents that only need to validate user input call
+`pt-techne-mcp-server/validate_team_spec`.
 
 ## Documentation
 
