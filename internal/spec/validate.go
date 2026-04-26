@@ -16,10 +16,6 @@ import (
 //go:embed schema_embed.json
 var schemaBytes []byte
 
-// printer is a non-nil i18n printer for jsonschema's LocalizedString. The
-// library panics on a nil printer for some error kinds.
-var printer = message.NewPrinter(language.English)
-
 // ValidationError is a single human-readable validation failure tied to a
 // JSON Pointer path within the input spec.
 type ValidationError struct {
@@ -31,6 +27,10 @@ type ValidationError struct {
 // Construct via NewValidator; safe for concurrent use after construction.
 type Validator struct {
 	schema *jsonschema.Schema
+	// printer is a non-nil i18n printer used for jsonschema's LocalizedString.
+	// The library panics on a nil printer for some error kinds, so we always
+	// pass an English printer.
+	printer *message.Printer
 }
 
 // NewValidator compiles the embedded JSON Schema. Returns an error if the
@@ -48,16 +48,22 @@ func NewValidator() (*Validator, error) {
 	if err != nil {
 		return nil, fmt.Errorf("compile embedded schema: %w", err)
 	}
-	return &Validator{schema: s}, nil
+	return &Validator{schema: s, printer: message.NewPrinter(language.English)}, nil
 }
 
 // Validate validates a JSON-decoded spec (interface{} from json.Unmarshal).
-// Returns nil + empty errors when valid; never panics.
+// Returns nil + empty errors when valid; never panics. A nil receiver or
+// uninitialised validator returns a single configuration error rather than
+// panicking — callers that fail to construct via NewValidator surface a clear
+// message.
 func (v *Validator) Validate(spec any) []ValidationError {
+	if v == nil || v.schema == nil {
+		return []ValidationError{{Path: "", Message: "validator not initialised; call NewValidator first"}}
+	}
 	if err := v.schema.Validate(spec); err != nil {
 		var verr *jsonschema.ValidationError
 		if errorsAs(err, &verr) {
-			return flatten(verr)
+			return flatten(verr, v.printer)
 		}
 		return []ValidationError{{Path: "", Message: err.Error()}}
 	}
@@ -93,7 +99,7 @@ func errorsAs(err error, target **jsonschema.ValidationError) bool {
 
 // flatten walks the validation error tree and returns one entry per leaf
 // failure with a JSON Pointer path. Output is sorted by path for determinism.
-func flatten(root *jsonschema.ValidationError) []ValidationError {
+func flatten(root *jsonschema.ValidationError, printer *message.Printer) []ValidationError {
 	var out []ValidationError
 	var walk func(*jsonschema.ValidationError)
 	walk = func(e *jsonschema.ValidationError) {

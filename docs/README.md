@@ -83,8 +83,8 @@ there in the right alphabetical position.
 
 - **`internal/render/testdata/parity/*.json`** — hand-authored JSON spec for
   each real pt-logos team. The test renders each one and compares to a
-  golden `.tfvars`. **Run with `RENDER_UPDATE=1` to regenerate goldens after
-  intentional output changes.**
+  golden `.tfvars`. **Run with `go test ./internal/render/... -update` to
+  regenerate goldens after intentional output changes.**
 - **`internal/spec/*_test.go`** (TBA) — table-driven validation cases.
 
 The parity fixtures are the regression net. If you change the renderer, run

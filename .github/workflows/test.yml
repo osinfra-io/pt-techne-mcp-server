@@ -34,7 +34,7 @@ jobs:
 
       - name: staticcheck
         run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install honnef.co/go/tools/cmd/staticcheck@2026.1
           staticcheck ./...
 
       - name: Build
@@ -42,6 +42,7 @@ jobs:
 
       - name: Test
         run: |
+          set -o pipefail
           go test -race ./... | tee test-results.txt
           go test -coverprofile=cover.out ./...
           go tool cover -func=cover.out | tee coverage.txt

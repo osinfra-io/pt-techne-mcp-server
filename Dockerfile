@@ -16,4 +16,5 @@ RUN CGO_ENABLED=0 GOFLAGS=-trimpath go build \
 
 FROM scratch
 COPY --from=build /out/pt-techne-mcp-server /pt-techne-mcp-server
+USER 1000:1000
 ENTRYPOINT ["/pt-techne-mcp-server"]

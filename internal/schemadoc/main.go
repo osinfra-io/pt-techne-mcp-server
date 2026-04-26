@@ -47,7 +47,10 @@ func main() {
 	b.WriteString("Generated from `schema/team.schema.json` — do not edit by hand.\n\n")
 	b.WriteString("Run `make schema-docs` to regenerate.\n\n")
 
-	teamDef := resolveTeamDef(&root)
+	teamDef, err := resolveTeamDef(&root)
+	if err != nil {
+		die(err)
+	}
 	if teamDef == nil {
 		die(fmt.Errorf("schema does not declare a team definition"))
 	}
@@ -62,23 +65,23 @@ func main() {
 	}
 }
 
-func resolveTeamDef(root *schema) *schema {
+func resolveTeamDef(root *schema) (*schema, error) {
 	// Schema may be a top-level Team object (current shape) or a wrapper
 	// `{ teams: { additionalProperties: <team> } }`. Handle both.
 	if teams, ok := root.Properties["teams"]; ok && len(teams.AdditionalProperties) > 0 {
 		var t schema
 		if err := json.Unmarshal(teams.AdditionalProperties, &t); err != nil {
-			return nil
+			return nil, fmt.Errorf("unmarshal teams.additionalProperties: %w", err)
 		}
 		if t.Ref != "" && root.Defs != nil {
 			name := strings.TrimPrefix(t.Ref, "#/$defs/")
 			if def, ok := root.Defs[name]; ok {
-				return def
+				return def, nil
 			}
 		}
-		return &t
+		return &t, nil
 	}
-	return root
+	return root, nil
 }
 
 func writeField(b *strings.Builder, name string, s *schema, required bool, depth int) {

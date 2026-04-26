@@ -61,5 +61,5 @@ updates the copy before committing.
 `internal/render/render.go` is a hand-written emitter. Output must remain
 byte-identical to the canonical pt-logos team files. Any intentional change
 to formatting requires regenerating every golden under
-`internal/render/testdata/golden/` (use `RENDER_UPDATE=1`) and reviewing
-each diff manually.
+`internal/render/testdata/golden/` (run `go test ./internal/render/... -update`)
+and reviewing each diff manually.

@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/osinfra-io/pt-techne-mcp-server/internal/spec"
@@ -30,6 +31,9 @@ import (
 
 // Render renders a Team to canonical tfvars bytes.
 func Render(t *spec.Team) ([]byte, error) {
+	if t == nil {
+		return nil, fmt.Errorf("render: team is required")
+	}
 	if t.TeamKey == "" {
 		return nil, fmt.Errorf("render: team_key is required")
 	}
@@ -467,18 +471,15 @@ func (w *writer) merge(other *writer) { w.buf.Write(other.buf.Bytes()) }
 // emitMultilineStringList emits `name = [\n  "v1",\n  "v2"\n]` with the list
 // indented one level inside the current block. The terminating bracket sits
 // at the parent indent — matching the on-disk style for `topics` and
-// `google_project_services`.
+// `google_project_services`. The final element does not get a trailing comma.
 func emitMultilineStringList(w *writer, name string, vs []string) {
 	w.line(name + " = [")
-	for _, v := range vs {
-		w.write(strings.Repeat(" ", w.indent+2) + quote(v) + ",\n")
-	}
-	// Drop trailing comma from last element by rewriting last newline.
-	b := w.buf.Bytes()
-	// Find last ",\n" and strip the comma.
-	if n := len(b); n >= 2 && b[n-2] == ',' && b[n-1] == '\n' {
-		w.buf.Truncate(n - 2)
-		w.buf.WriteByte('\n')
+	for i, v := range vs {
+		suffix := ","
+		if i == len(vs)-1 {
+			suffix = ""
+		}
+		w.write(strings.Repeat(" ", w.indent+2) + quote(v) + suffix + "\n")
 	}
 	w.line("]")
 }
@@ -523,25 +524,12 @@ func emitStringList(vs []string) string {
 	return "[" + strings.Join(parts, ", ") + "]"
 }
 
-// quote renders an HCL string literal. We assume no control characters; the
-// inputs are validated to be plain strings (emails, identifiers, descriptions).
-// Backslashes and double-quotes are escaped.
+// quote renders an HCL string literal. We rely on strconv.Quote so control
+// characters (newline, tab, etc.) and non-printable runes are properly
+// escaped; HCL accepts the same escape sequences as Go for double-quoted
+// strings. Printable Unicode (e.g. em dash) is preserved verbatim.
 func quote(s string) string {
-	var b strings.Builder
-	b.Grow(len(s) + 2)
-	b.WriteByte('"')
-	for _, r := range s {
-		switch r {
-		case '\\':
-			b.WriteString(`\\`)
-		case '"':
-			b.WriteString(`\"`)
-		default:
-			b.WriteRune(r)
-		}
-	}
-	b.WriteByte('"')
-	return b.String()
+	return strconv.Quote(s)
 }
 
 func boolStr(v bool) string {
