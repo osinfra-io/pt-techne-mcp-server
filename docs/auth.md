@@ -38,12 +38,52 @@ for it.
 
 ## Required token capabilities
 
-Whatever produces the token must scope it to `osinfra-io/pt-logos` with:
+Whatever produces the token must scope it to `osinfra-io/pt-logos` with two
+write permissions:
 
-- `contents: write` — to commit the rendered tfvars to a branch.
-- `pull_requests: write` — to open or update the PR.
+- **Contents — write** (read commits, create branches, write blobs/trees,
+  push commits).
+- **Pull requests — write** (open, list, and update PRs).
 
-Minimum viable scopes; the tool needs no organization-level permissions.
+That is the full set. The tool does not need organization-level permissions,
+metadata write, workflow write, or any non-`pt-logos` repository access.
+
+How to express that depends on the token source:
+
+### GitHub App (recommended for non-interactive deployments)
+
+In the App's settings:
+
+- **Repository permissions** → Contents: **Read and write**, Pull requests:
+  **Read and write**.
+- **Repository access** → Only select repositories → `osinfra-io/pt-logos`.
+
+Mint installation tokens with
+[`actions/create-github-app-token`](https://github.com/actions/create-github-app-token)
+(already used elsewhere in `osinfra-io`, e.g. the `add-to-project` reusable
+workflow) and pass the result as `GITHUB_TOKEN`.
+
+### Fine-grained personal access token (local development)
+
+When creating the token at
+<https://github.com/settings/personal-access-tokens>:
+
+- **Resource owner** → `osinfra-io`.
+- **Repository access** → Only select repositories → `osinfra-io/pt-logos`.
+- **Repository permissions** → Contents: **Read and write**, Pull requests:
+  **Read and write**.
+
+### `gh auth token`
+
+`gh` tokens carry whatever scopes you authorized when running
+`gh auth login`. They work for local development as long as your account can
+push to a branch on `pt-logos` and open PRs against it. Prefer a fine-grained
+PAT or App token for anything non-interactive.
+
+### Classic PAT
+
+Not recommended — the closest equivalent is the broad `repo` scope, which
+grants far more than the tool needs. Use one of the options above instead.
 
 ## Operational error codes
 

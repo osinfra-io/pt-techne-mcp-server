@@ -20,7 +20,7 @@ Model Context Protocol (MCP) server providing platform context and tools to AI a
 
 | Env var | Required by | Notes |
 |---|---|---|
-| `GITHUB_TOKEN` | `open_team_pr` | Pre-minted token with `contents:write` and `pull_requests:write` on `osinfra-io/pt-logos`. Source is up to the deployment: `gh auth token` locally, [`actions/create-github-app-token`](https://github.com/actions/create-github-app-token) in workflows, or a mounted secret in containers. See [`docs/auth.md`](docs/auth.md) for the full token contract and operational error codes. |
+| `GITHUB_TOKEN` | `open_team_pr` | Pre-minted token scoped to `osinfra-io/pt-logos` with **Contents: read and write** and **Pull requests: read and write**. Source is up to the deployment: a GitHub App via [`actions/create-github-app-token`](https://github.com/actions/create-github-app-token) in workflows, a fine-grained PAT or `gh auth token` locally, or a mounted secret in long-running containers. See [`docs/auth.md`](docs/auth.md#required-token-capabilities) for the full token contract, per-source setup, and operational error codes. |
 
 Without `GITHUB_TOKEN` the server still serves `validate_team_spec` and `render_team_tfvars`; `open_team_pr` returns a structured `not_configured` error.
 
