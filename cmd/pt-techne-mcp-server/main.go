@@ -6,6 +6,10 @@
 //   - render_team_tfvars  — render a validated spec to canonical pt-logos tfvars
 //   - open_team_pr        — open or update a PR on osinfra-io/pt-logos with the
 //     rendered tfvars (requires GITHUB_TOKEN)
+//   - list_teams          — summary index of every team in pt-logos@main (requires GITHUB_TOKEN)
+//   - get_team            — parsed spec for one team (requires GITHUB_TOKEN)
+//   - lookup_user         — every team and role a user appears in (requires GITHUB_TOKEN)
+//   - find_repo           — which team owns a github repository (requires GITHUB_TOKEN)
 //
 // Transport is stdio only.
 package main
@@ -47,6 +51,10 @@ func main() {
 	tools.Validate(server, v)
 	tools.Render(server, v)
 	tools.OpenTeamPR(server, v, ghClient)
+	tools.ListTeams(server, v, ghClient)
+	tools.GetTeam(server, v, ghClient)
+	tools.LookupUser(server, v, ghClient)
+	tools.FindRepo(server, v, ghClient)
 
 	if err := server.Run(ctx, &mcp.StdioTransport{}); err != nil {
 		log.Fatalf("server: %v", err)

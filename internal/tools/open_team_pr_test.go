@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -78,6 +80,32 @@ func (f *fakeClient) GetFile(_ context.Context, path, ref string) ([]byte, strin
 		return nil, "", false, nil
 	}
 	return []byte(v), "blob-" + v, true, nil
+}
+
+func (f *fakeClient) ListDir(_ context.Context, path, ref string) ([]string, bool, error) {
+	prefix := path + "/"
+	suffix := "@" + ref
+	seen := map[string]struct{}{}
+	var out []string
+	for k := range f.files {
+		if !strings.HasPrefix(k, prefix) || !strings.HasSuffix(k, suffix) {
+			continue
+		}
+		name := k[len(prefix) : len(k)-len(suffix)]
+		if _, dup := seen[name]; dup {
+			continue
+		}
+		seen[name] = struct{}{}
+		out = append(out, name)
+	}
+	sort.Strings(out)
+	// Test convention: no matching files == directory absent. Real
+	// pt-logos always has teams/ populated, so this is only how the
+	// "directory missing" case is expressed in tests.
+	if len(out) == 0 {
+		return nil, false, nil
+	}
+	return out, true, nil
 }
 
 func (f *fakeClient) CreateOrUpdateFile(_ context.Context, path, branch, _ string, content []byte, _ string) (string, error) {
