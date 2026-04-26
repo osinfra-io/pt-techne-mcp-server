@@ -33,7 +33,8 @@ Hard rules:
                            │ embed
                            ▼
             ┌──────────────────────────────┐
-            │ internal/spec.Validator      │  ← validates raw JSON
+            │ internal/spec.Validator      │  ← Validate(decoded) /
+            │                              │    ValidateJSON(raw bytes)
             └──────────────────────────────┘
                            ▲
                            │ uses
