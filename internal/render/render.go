@@ -70,8 +70,10 @@ func emitTeamBody(w *writer, t *spec.Team) {
 	emit(func() { emitDatadog(w, t.DatadogTeamMemberships) })
 	emit(func() { emitDisplayName(w, t.DisplayName, t.DisplayNameComment) })
 
-	// Adjacent boolean group: enable_opentofu_state_management, enable_workflows
-	if t.EnableOpenTofuStateManagement != nil || t.EnableWorkflows != nil {
+	// Adjacent simple toggles are emitted as one aligned group so the `=`
+	// signs line up. The keys (alphabetical): enable_google_project,
+	// enable_opentofu_state_management, enable_workflows.
+	if t.EnableGoogleProject != nil || t.EnableOpenTofuStateManagement != nil || t.EnableWorkflows != nil {
 		emit(func() { emitEnableGroup(w, t) })
 	}
 
@@ -94,17 +96,20 @@ func emitTeamBody(w *writer, t *spec.Team) {
 			emitEnvScopedGroups(w, "google_project_creator_groups_memberships", *t.GoogleProjectCreatorGroups)
 		})
 	}
+	if t.GoogleProjectEnableDatadog != nil {
+		emit(func() {
+			w.line("google_project_enable_datadog = " + boolStr(*t.GoogleProjectEnableDatadog))
+		})
+	}
+	if len(t.GoogleProjectServices) > 0 {
+		emit(func() { emitMultilineStringList(w, "google_project_services", t.GoogleProjectServices) })
+	}
 	if t.GoogleXPNAdminGroups != nil {
 		emit(func() { emitEnvScopedGroups(w, "google_xpn_admin_groups_memberships", *t.GoogleXPNAdminGroups) })
 	}
 
 	if t.PlatformManagedProject != nil {
 		emit(func() { emitPlatformManagedProject(w, *t.PlatformManagedProject) })
-	}
-
-	// Final adjacent group: project-level toggles + services. Aligned together.
-	if t.EnableGoogleProject != nil || t.GoogleProjectEnableDatadog != nil || len(t.GoogleProjectServices) > 0 {
-		emit(func() { emitProjectToggles(w, t) })
 	}
 
 	emit(func() { w.line("team_type = " + quote(t.TeamType)) })
@@ -131,31 +136,14 @@ func emitDisplayName(w *writer, name, comment string) {
 
 func emitEnableGroup(w *writer, t *spec.Team) {
 	var rows [][2]string
+	if t.EnableGoogleProject != nil {
+		rows = append(rows, [2]string{"enable_google_project", boolStr(*t.EnableGoogleProject)})
+	}
 	if t.EnableOpenTofuStateManagement != nil {
 		rows = append(rows, [2]string{"enable_opentofu_state_management", boolStr(*t.EnableOpenTofuStateManagement)})
 	}
 	if t.EnableWorkflows != nil {
 		rows = append(rows, [2]string{"enable_workflows", boolStr(*t.EnableWorkflows)})
-	}
-	w.alignedTop(rows)
-}
-
-func emitProjectToggles(w *writer, t *spec.Team) {
-	var rows [][2]string
-	if t.EnableGoogleProject != nil {
-		rows = append(rows, [2]string{"enable_google_project", boolStr(*t.EnableGoogleProject)})
-	}
-	if t.GoogleProjectEnableDatadog != nil {
-		rows = append(rows, [2]string{"google_project_enable_datadog", boolStr(*t.GoogleProjectEnableDatadog)})
-	}
-	if len(t.GoogleProjectServices) > 0 {
-		// google_project_services renders as a multi-line list — emit separately, no alignment.
-		w.alignedTop(rows)
-		if len(rows) > 0 {
-			w.blank()
-		}
-		emitMultilineStringList(w, "google_project_services", t.GoogleProjectServices)
-		return
 	}
 	w.alignedTop(rows)
 }

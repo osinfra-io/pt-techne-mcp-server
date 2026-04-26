@@ -7,6 +7,7 @@ teams = {
 
     display_name = "Techne" # The practiced art of making — the disciplined craft through which raw materials of infrastructure are shaped into purposeful, refined platform instruments.
 
+    enable_google_project            = true
     enable_opentofu_state_management = true
     enable_workflows                 = true
 
@@ -169,8 +170,6 @@ teams = {
         owners   = ["brett@osinfra.io"]
       }
     }
-
-    enable_google_project = true
 
     team_type = "platform-team"
   }
