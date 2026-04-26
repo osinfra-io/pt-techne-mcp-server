@@ -1,6 +1,6 @@
-# <img align="left" width="45" height="45" src="https://user-images.githubusercontent.com/1610100/201473670-e0e6bdeb-742f-4be1-a47a-3506309620a3.png"> Techne MCP Server
+# Techne MCP Server
 
-[![Go Test](https://img.shields.io/github/actions/workflow/status/osinfra-io/pt-techne-mcp-server/go-test.yml?style=for-the-badge&logo=github&color=2088FF&label=Go%20Test)](https://github.com/osinfra-io/pt-techne-mcp-server/actions/workflows/go-test.yml)
+[![Go Test](https://img.shields.io/github/actions/workflow/status/osinfra-io/pt-techne-mcp-server/go-test.yml?style=for-the-badge&logo=go&color=00ADD8&label=Go%20Test)](https://github.com/osinfra-io/pt-techne-mcp-server/actions/workflows/go-test.yml)
 
 Model Context Protocol (MCP) server providing platform context and tools to AI assistants. Exposes deterministic, typed tools so platform agents call a tested renderer instead of writing HCL by hand.
 
