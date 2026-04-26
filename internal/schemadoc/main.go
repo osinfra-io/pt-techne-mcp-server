@@ -57,7 +57,11 @@ func main() {
 	required := setOf(teamDef.Required)
 
 	for _, k := range sortedKeys(teamDef.Properties) {
-		writeField(&b, k, teamDef.Properties[k], required[k], 2)
+		field := teamDef.Properties[k]
+		if field == nil {
+			die(fmt.Errorf("render field %q: schema is null", k))
+		}
+		writeField(&b, k, field, required[k], 2)
 	}
 
 	if err := os.WriteFile(os.Args[2], []byte(b.String()), 0o644); err != nil {
@@ -68,7 +72,8 @@ func main() {
 func resolveTeamDef(root *schema) (*schema, error) {
 	// Schema may be a top-level Team object (current shape) or a wrapper
 	// `{ teams: { additionalProperties: <team> } }`. Handle both.
-	if teams, ok := root.Properties["teams"]; ok && len(teams.AdditionalProperties) > 0 {
+	teams, ok := root.Properties["teams"]
+	if ok && teams != nil && len(teams.AdditionalProperties) > 0 {
 		var t schema
 		if err := json.Unmarshal(teams.AdditionalProperties, &t); err != nil {
 			return nil, fmt.Errorf("unmarshal teams.additionalProperties: %w", err)
