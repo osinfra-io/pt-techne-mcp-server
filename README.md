@@ -15,6 +15,8 @@ Model Context Protocol (MCP) server providing platform context and tools to AI a
 | `get_team` | `{team_key: string}` | `{spec: <object>}` (same shape `validate_team_spec` accepts) |
 | `lookup_user` | `{github_username: string} \| {email: string}` | `{matches: [{team_key, via, system, scope, subject, membership}]}` |
 | `find_repo` | `{name: string}` | `{matches: [{team_key, repository: <object>}]}` |
+| `render_corpus_helpers` | `{team_key: string}` | `{helpers_tofu: string}` (canonical `pt-corpus/helpers.tofu` bytes with `<team_key>-main-production` inserted) |
+| `render_pneuma_helpers` | `{team_key: string}` | `{helpers_tofu: string}` (same, for `pt-pneuma/helpers.tofu`) |
 
 `render_team_tfvars` validates first; on failure it returns an MCP `isError` result with the same structured errors as `validate_team_spec`.
 
@@ -26,22 +28,24 @@ Model Context Protocol (MCP) server providing platform context and tools to AI a
 - `find_repo` matches GitHub repository names case-sensitively. Empty `matches` is success, not an error.
 - `get_team` returns `not_found` for an unknown `team_key`.
 
+`render_corpus_helpers` and `render_pneuma_helpers` fetch `helpers.tofu` from `osinfra-io/pt-corpus@main` and `osinfra-io/pt-pneuma@main` respectively, insert `<team_key>-main-production` into the `logos_workspaces` list inside the `module "core_helpers"` block, and return the canonical updated file bytes. They are **idempotent**: when the workspace is already present, the input bytes are returned byte-identical. They preserve every other byte of the file (comments, indentation, line-ending style, trailing-comma convention) and refuse to rewrite a file whose `logos_workspaces` is anything other than a list of plain string literals (returns `source_parse_error`). These tools produce bytes only — they do not open PRs; the caller (or a follow-up tool) is responsible for landing the change.
+
 ## Configuration
 
 ### `GITHUB_TOKEN`
 
-Required by `open_team_pr` and the four read tools (`list_teams`, `get_team`, `lookup_user`, `find_repo`). Without it the server still serves `validate_team_spec` and `render_team_tfvars`; the GitHub-backed tools return a structured `not_configured` error.
+Required by `open_team_pr`, the four pt-logos read tools (`list_teams`, `get_team`, `lookup_user`, `find_repo`), and the two helpers renderers (`render_corpus_helpers`, `render_pneuma_helpers`). Without it the server still serves `validate_team_spec` and `render_team_tfvars`; the GitHub-backed tools return a structured `not_configured` error.
 
-The token must be scoped to `osinfra-io/pt-logos` with two write permissions:
+The token must be scoped to **`osinfra-io/pt-logos`**, **`osinfra-io/pt-corpus`**, and **`osinfra-io/pt-pneuma`** with the following permissions:
 
-- **Contents — read and write** (read commits, create branches, write blobs/trees, push commits).
-- **Pull requests — read and write** (list, open, and update PRs).
+- On `pt-logos`: **Contents — read and write**, **Pull requests — read and write** (used by `open_team_pr` plus the four read tools).
+- On `pt-corpus` and `pt-pneuma`: **Contents — read** (used by `render_corpus_helpers` and `render_pneuma_helpers` to fetch `helpers.tofu`).
 
 How to express that depends on the token source:
 
-- **GitHub App** (recommended for non-interactive deployments). In the App's settings, repository permissions → Contents: Read and write, Pull requests: Read and write; repository access → Only select repositories → `osinfra-io/pt-logos`. Mint installation tokens with [`actions/create-github-app-token`](https://github.com/actions/create-github-app-token) (already used elsewhere in the org) and pass the result as `GITHUB_TOKEN`.
-- **Fine-grained PAT** (local development). At <https://github.com/settings/personal-access-tokens>, resource owner `osinfra-io`; repository access → Only select repositories → `osinfra-io/pt-logos`; repository permissions → Contents: Read and write, Pull requests: Read and write.
-- **`gh auth token`** works for local development as long as your account can push to a branch on `pt-logos` and open PRs against it. Prefer a fine-grained PAT or App token for anything non-interactive.
+- **GitHub App** (recommended for non-interactive deployments). In the App's settings, repository permissions → Contents: Read and write, Pull requests: Read and write; repository access → Only select repositories → `osinfra-io/pt-logos`, `osinfra-io/pt-corpus`, `osinfra-io/pt-pneuma`. (Read-only on corpus/pneuma is enough — the App-permissions UI does not let you set per-repo permission levels, so the same Read/Write set applies to all selected repos; if least privilege matters, use a separate App for the helpers renderers.) Mint installation tokens with [`actions/create-github-app-token`](https://github.com/actions/create-github-app-token) (already used elsewhere in the org) and pass the result as `GITHUB_TOKEN`.
+- **Fine-grained PAT** (local development). At <https://github.com/settings/personal-access-tokens>, resource owner `osinfra-io`; repository access → Only select repositories → `osinfra-io/pt-logos`, `osinfra-io/pt-corpus`, `osinfra-io/pt-pneuma`; repository permissions → Contents: Read and write, Pull requests: Read and write. (Same per-repo permission caveat as the App option above.)
+- **`gh auth token`** works for local development as long as your account can push to a branch on `pt-logos` and open PRs against it, and read `pt-corpus` and `pt-pneuma`. Prefer a fine-grained PAT or App token for anything non-interactive.
 - **Classic PAT** is not recommended — the closest equivalent (`repo` scope) grants far more than the tool needs.
 
 ### Operational errors
@@ -56,8 +60,8 @@ How to express that depends on the token source:
   |---|---|---|
   | `not_configured` | false | `GITHUB_TOKEN` was empty at startup. Set it and restart. |
   | `not_found` | false | `get_team` was called with an unknown `team_key`. |
-  | `invalid_input` | false | `lookup_user` was called with neither or both of `github_username` and `email`. |
-  | `source_parse_error` | false | A `teams/*.tfvars` in `pt-logos@main` failed to parse or validate against the schema. The source must be fixed; retrying will not help. |
+  | `invalid_input` | false | `lookup_user` was called with neither or both of `github_username` and `email`; or `render_corpus_helpers`/`render_pneuma_helpers` was called with a `team_key` that does not match the team-spec regex. |
+  | `source_parse_error` | false | A `teams/*.tfvars` in `pt-logos@main`, or `helpers.tofu` in `pt-corpus@main`/`pt-pneuma@main`, failed to parse, validate, or matched an unsupported shape (e.g. missing `module "core_helpers"` block, `logos_workspaces` not a list of plain strings). The source must be fixed; retrying will not help. |
   | `branch_diverged` | false | The team branch has diverged from `main` and an open PR exists; the tool refuses to rewrite history under a human's PR. Rebase or close the PR, then retry. (write tools only) |
   | `github_conflict` | true | A 409/422 from GitHub raced our write and didn't auto-reconcile. Retry. (write tools only) |
   | `github_api_error` | true | Other GitHub API failure (network, 5xx, unexpected 4xx). Retry; if persistent, check the GitHub status page and the token's permissions. |

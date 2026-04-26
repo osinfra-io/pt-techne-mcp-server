@@ -9,6 +9,8 @@ code.
 cmd/pt-techne-mcp-server/   — main; wires SDK, registers tools, serves stdio
 internal/spec/              — typed Team struct + JSON Schema validator
 internal/render/            — canonical HCL emitter (pt-logos tfvars)
+internal/helpersrender/     — surgical inserter for logos_workspaces in
+                              pt-corpus / pt-pneuma helpers.tofu
 internal/github/            — narrow Client interface + go-github wrapper
 internal/tools/             — thin MCP adapters around spec + render + github
 internal/schemadoc/         — generator for docs/schema.md
@@ -42,9 +44,11 @@ Hard rules:
                            │ uses
             ┌──────────────────────────────┐         ┌──────────────────────────┐
             │ internal/tools.{Validate,    │ ──────► │ internal/render.Render   │
-            │   Render, OpenTeamPR,        │         └──────────────────────────┘
-            │   ListTeams, GetTeam,        │
-            │   LookupUser, FindRepo}      │
+            │   Render, OpenTeamPR,        │         │ internal/helpersrender   │
+            │   ListTeams, GetTeam,        │         └──────────────────────────┘
+            │   LookupUser, FindRepo,      │
+            │   RenderCorpusHelpers,       │
+            │   RenderPneumaHelpers}       │
             └──────────┬───────────────────┘
                        │ all GitHub-backed tools
                        ▼
@@ -61,7 +65,7 @@ diverge; `make sync-schema` updates the copy.
 
 ## Read tools vs write tools
 
-`open_team_pr` is the only **writer**. The four readers — `list_teams`,
+`open_team_pr` is the only **writer**. The four pt-logos readers — `list_teams`,
 `get_team`, `lookup_user`, `find_repo` — share a common shape implemented
 in `internal/tools/team_source.go`:
 
@@ -70,6 +74,18 @@ in `internal/tools/team_source.go`:
    `SetLimit(8)`) of `GetFile` + `spec.Parse` + schema validate per team.
 3. Tool-specific transformation of the parsed `[]*spec.Team` into the
    typed output.
+
+The two helpers renderers — `render_corpus_helpers` and
+`render_pneuma_helpers` — are also reads, but against sibling repos
+(`pt-corpus`, `pt-pneuma`) rather than `pt-logos`. They use
+`Client.GetFileInRepo` (the only cross-repo method on the GitHub
+client; the rest of the surface is pt-logos-only) to fetch each repo's
+`helpers.tofu`, then call `internal/helpersrender.Render` to splice in
+one new line for the team's `<team_key>-main-production` workspace and
+return the canonical updated bytes. No writes — the agent is
+responsible for landing the output (typically by checking the bytes
+into a PR with the same tooling it already uses for `helpers.tofu`
+edits).
 
 `spec.Parse` (the inverse of `render.Render`) uses
 `hashicorp/hcl/v2/hclsyntax` to evaluate the `teams` attribute to a cty
@@ -128,6 +144,27 @@ sorted key order so output is deterministic.
 Field order inside a team body is enumerated explicitly by `emitTeamBody`.
 That function is the contract: if you add a new top-level team field, add it
 there in the right alphabetical position.
+
+`internal/helpersrender/render.go` is a different shape of renderer with a
+different contract: instead of producing a whole file from a typed spec,
+it surgically edits an existing `helpers.tofu` from a sibling repo and
+inserts one new entry into the `logos_workspaces` list. The contract:
+
+- **Byte-identical noop.** If the workspace is already present, the input
+  bytes are returned unchanged.
+- **Minimal diff.** Only the bytes for the new line are added; existing
+  entries, comments, indentation, line-ending style (LF/CRLF), and
+  trailing-comma convention are preserved exactly.
+- **Strict input shape.** Exactly one `module "core_helpers"` block with
+  exactly one `logos_workspaces` attribute; the attribute must be a list
+  literal of plain string literals. Anything else is rejected with
+  `source_parse_error` rather than guessed at.
+
+The implementation parses with `hashicorp/hcl/v2/hclsyntax` to locate
+the list and read its existing string values, then byte-splices a new
+line into the source at the correct position. `hclwrite` was considered
+and rejected: its token-level rewriting normalizes formatting in ways
+that fight the byte-identical-noop contract.
 
 ## Tests
 

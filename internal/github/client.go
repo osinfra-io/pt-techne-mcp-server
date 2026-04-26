@@ -49,6 +49,12 @@ type Client interface {
 	CompareCommits(ctx context.Context, base, head string) (CompareStatus, error)
 	GetFile(ctx context.Context, path, ref string) (content []byte, blobSHA string, exists bool, err error)
 	ListDir(ctx context.Context, path, ref string) (names []string, exists bool, err error)
+	// GetFileInRepo reads a single file from a sibling repo under
+	// osinfra-io. Used by the helpers renderers (render_corpus_helpers,
+	// render_pneuma_helpers) which fetch helpers.tofu from pt-corpus and
+	// pt-pneuma respectively. Read-only; the write methods above remain
+	// pt-logos-only.
+	GetFileInRepo(ctx context.Context, repo, path, ref string) (content []byte, blobSHA string, exists bool, err error)
 	CreateOrUpdateFile(ctx context.Context, path, branch, blobSHA string, content []byte, message string) (commitSHA string, err error)
 	ListOpenPRs(ctx context.Context, head, base string) ([]PullRequest, error)
 	CreatePR(ctx context.Context, head, base, title, body string) (PullRequest, error)
@@ -123,6 +129,21 @@ func (c *goClient) CompareCommits(ctx context.Context, base, head string) (Compa
 
 func (c *goClient) GetFile(ctx context.Context, path, ref string) ([]byte, string, bool, error) {
 	file, _, resp, err := c.api.Repositories.GetContents(ctx, Owner, Repo, path, &gh.RepositoryContentGetOptions{Ref: ref})
+	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return nil, "", false, nil
+		}
+		return nil, "", false, err
+	}
+	body, err := file.GetContent()
+	if err != nil {
+		return nil, "", false, err
+	}
+	return []byte(body), file.GetSHA(), true, nil
+}
+
+func (c *goClient) GetFileInRepo(ctx context.Context, repo, path, ref string) ([]byte, string, bool, error) {
+	file, _, resp, err := c.api.Repositories.GetContents(ctx, Owner, repo, path, &gh.RepositoryContentGetOptions{Ref: ref})
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, "", false, nil
