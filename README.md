@@ -11,16 +11,26 @@ Model Context Protocol (MCP) server providing platform context and tools to AI a
 | `validate_team_spec` | `{spec: <object>}` | `{valid: bool, errors: [{path, message}]}` |
 | `render_team_tfvars` | `{spec: <object>}` | `{tfvars: string}` (canonical pt-logos `.tfvars` bytes) |
 | `open_team_pr` | `{spec: <object>, message?: string}` | `{pr_url, pr_number, branch, commit_sha, action}` |
+| `list_teams` | `{}` | `{teams: [{team_key, display_name, team_type, member_count, repo_count, env_count}]}` |
+| `get_team` | `{team_key: string}` | `{spec: <object>}` (same shape `validate_team_spec` accepts) |
+| `lookup_user` | `{github_username: string} \| {email: string}` | `{matches: [{team_key, via, system, scope, subject, membership}]}` |
+| `find_repo` | `{name: string}` | `{matches: [{team_key, repository: <object>}]}` |
 
 `render_team_tfvars` validates first; on failure it returns an MCP `isError` result with the same structured errors as `validate_team_spec`.
 
 `open_team_pr` validates, renders, and opens-or-updates a PR on `osinfra-io/pt-logos` in one call. It is **idempotent on retry** — identical input + identical repo state returns `action: "noop"`.
 
+`list_teams`, `get_team`, `lookup_user`, and `find_repo` are pure reads against `osinfra-io/pt-logos@main` over the GitHub API. Each call fetches fresh — no in-process caching — so results always reflect the current branch state. Read tools require `GITHUB_TOKEN` for the same reason `open_team_pr` does (the repo is private to the GitHub API without authentication; even read access goes through it). Match semantics:
+
+- `lookup_user` accepts exactly one of `github_username` or `email`. Matching is case-insensitive and exact. Returned `via` echoes which input matched. `system`/`scope`/`subject`/`membership` are structured (no embedded encoded role strings) so callers can filter without re-parsing.
+- `find_repo` matches GitHub repository names case-sensitively. Empty `matches` is success, not an error.
+- `get_team` returns `not_found` for an unknown `team_key`.
+
 ## Configuration
 
 ### `GITHUB_TOKEN`
 
-Required by `open_team_pr`. Without it the server still serves `validate_team_spec` and `render_team_tfvars`; `open_team_pr` returns a structured `not_configured` error.
+Required by `open_team_pr` and the four read tools (`list_teams`, `get_team`, `lookup_user`, `find_repo`). Without it the server still serves `validate_team_spec` and `render_team_tfvars`; the GitHub-backed tools return a structured `not_configured` error.
 
 The token must be scoped to `osinfra-io/pt-logos` with two write permissions:
 
@@ -36,17 +46,20 @@ How to express that depends on the token source:
 
 ### Operational errors
 
-`open_team_pr` returns three flavors of MCP `isError` result:
+`open_team_pr` and the read tools return structured MCP `isError` results:
 
-- **Validation errors** — same `{valid: false, errors: [{path, message}]}` shape as `validate_team_spec`.
+- **Validation errors** — same `{valid: false, errors: [{path, message}]}` shape as `validate_team_spec` (write tools only).
 - **Internal errors** — surfaced as plain MCP errors (the SDK's error path); reserved for things that should never happen.
 - **Operational errors** — `{code, message, retryable}`:
 
   | `code` | `retryable` | Meaning |
   |---|---|---|
   | `not_configured` | false | `GITHUB_TOKEN` was empty at startup. Set it and restart. |
-  | `branch_diverged` | false | The team branch has diverged from `main` and an open PR exists; the tool refuses to rewrite history under a human's PR. Rebase or close the PR, then retry. |
-  | `github_conflict` | true | A 409/422 from GitHub raced our write and didn't auto-reconcile. Retry. |
+  | `not_found` | false | `get_team` was called with an unknown `team_key`. |
+  | `invalid_input` | false | `lookup_user` was called with neither or both of `github_username` and `email`. |
+  | `source_parse_error` | false | A `teams/*.tfvars` in `pt-logos@main` failed to parse or validate against the schema. The source must be fixed; retrying will not help. |
+  | `branch_diverged` | false | The team branch has diverged from `main` and an open PR exists; the tool refuses to rewrite history under a human's PR. Rebase or close the PR, then retry. (write tools only) |
+  | `github_conflict` | true | A 409/422 from GitHub raced our write and didn't auto-reconcile. Retry. (write tools only) |
   | `github_api_error` | true | Other GitHub API failure (network, 5xx, unexpected 4xx). Retry; if persistent, check the GitHub status page and the token's permissions. |
 
   Codes are an enumerated set; agents may switch on them. New codes are added sparingly and never reused with new meanings.

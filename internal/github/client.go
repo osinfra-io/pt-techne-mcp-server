@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"sort"
 
 	gh "github.com/google/go-github/v68/github"
 	"golang.org/x/oauth2"
@@ -47,6 +48,7 @@ type Client interface {
 	DeleteRef(ctx context.Context, branch string) error
 	CompareCommits(ctx context.Context, base, head string) (CompareStatus, error)
 	GetFile(ctx context.Context, path, ref string) (content []byte, blobSHA string, exists bool, err error)
+	ListDir(ctx context.Context, path, ref string) (names []string, exists bool, err error)
 	CreateOrUpdateFile(ctx context.Context, path, branch, blobSHA string, content []byte, message string) (commitSHA string, err error)
 	ListOpenPRs(ctx context.Context, head, base string) ([]PullRequest, error)
 	CreatePR(ctx context.Context, head, base, title, body string) (PullRequest, error)
@@ -132,6 +134,24 @@ func (c *goClient) GetFile(ctx context.Context, path, ref string) ([]byte, strin
 		return nil, "", false, err
 	}
 	return []byte(body), file.GetSHA(), true, nil
+}
+
+func (c *goClient) ListDir(ctx context.Context, path, ref string) ([]string, bool, error) {
+	_, dir, resp, err := c.api.Repositories.GetContents(ctx, Owner, Repo, path, &gh.RepositoryContentGetOptions{Ref: ref})
+	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	out := make([]string, 0, len(dir))
+	for _, e := range dir {
+		if e.GetType() == "file" {
+			out = append(out, e.GetName())
+		}
+	}
+	sort.Strings(out)
+	return out, true, nil
 }
 
 func (c *goClient) CreateOrUpdateFile(ctx context.Context, path, branch, blobSHA string, content []byte, message string) (string, error) {

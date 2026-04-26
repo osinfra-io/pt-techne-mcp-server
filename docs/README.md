@@ -42,9 +42,11 @@ Hard rules:
                            │ uses
             ┌──────────────────────────────┐         ┌──────────────────────────┐
             │ internal/tools.{Validate,    │ ──────► │ internal/render.Render   │
-            │   Render, OpenTeamPR}        │         └──────────────────────────┘
+            │   Render, OpenTeamPR,        │         └──────────────────────────┘
+            │   ListTeams, GetTeam,        │
+            │   LookupUser, FindRepo}      │
             └──────────┬───────────────────┘
-                       │ open_team_pr only
+                       │ all GitHub-backed tools
                        ▼
             ┌──────────────────────────────┐
             │ internal/github.Client       │  ← interface
@@ -56,6 +58,29 @@ Hard rules:
 The schema is duplicated into `internal/spec/schema_embed.json` because
 `//go:embed` cannot traverse parent directories. CI fails when the two
 diverge; `make sync-schema` updates the copy.
+
+## Read tools vs write tools
+
+`open_team_pr` is the only **writer**. The four readers — `list_teams`,
+`get_team`, `lookup_user`, `find_repo` — share a common shape implemented
+in `internal/tools/team_source.go`:
+
+1. `listTeamFiles` — `ListDir teams/` on `pt-logos@main`.
+2. `fetchAllTeams` — bounded-concurrency fan-out (`errgroup` with
+   `SetLimit(8)`) of `GetFile` + `spec.Parse` + schema validate per team.
+3. Tool-specific transformation of the parsed `[]*spec.Team` into the
+   typed output.
+
+`spec.Parse` (the inverse of `render.Render`) uses
+`hashicorp/hcl/v2/hclsyntax` to evaluate the `teams` attribute to a cty
+value, then strict-decodes via JSON into `spec.Team`
+(`DisallowUnknownFields`). The renderer's inline `display_name`
+etymology comment is recovered with a small regex against the raw bytes
+— the only piece that the HCL grammar drops.
+
+A failed parse or schema validation surfaces as a non-retryable
+`source_parse_error`: a human edit on `pt-logos` introduced data that
+this server's schema does not accept, and retrying will not help.
 
 ## `open_team_pr` flow
 
@@ -110,7 +135,13 @@ there in the right alphabetical position.
   each real pt-logos team. The test renders each one and compares to a
   golden `.tfvars`. **Run with `RENDER_UPDATE=1 go test ./internal/render/...`
   to regenerate goldens after intentional output changes.**
-- **`internal/spec/*_test.go`** — table-driven validation cases.
+- **`internal/spec/parse_test.go`** — round-trip parity: for every parity
+  input the renderer produced, `spec.Parse` reproduces the original
+  spec. This is the contract that makes "spec ↔ tfvars round-trip is
+  byte-stable" enforceable rather than aspirational.
+- **`internal/spec/validate_test.go`** — table-driven validation cases.
+- **`internal/tools/read_tools_test.go`** — read-tool tests using the
+  in-memory fake seeded with the renderer goldens.
 
 The parity fixtures are the regression net. If you change the renderer, run
 the parity test and inspect every golden diff.
