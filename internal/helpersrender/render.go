@@ -76,6 +76,10 @@ func Render(existing []byte, workspace string) ([]byte, error) {
 		return nil, fmt.Errorf("logos_workspaces is empty; cannot infer style for insertion")
 	}
 
+	if !elementsOnOwnLines(existing, tup) {
+		return nil, fmt.Errorf("logos_workspaces must use one element per line")
+	}
+
 	eol := detectEOL(existing)
 	indent := elementIndent(existing, tup.Exprs[0].Range())
 	insertIdx := alphaInsertIndex(values, workspace)
@@ -160,6 +164,27 @@ func detectEOL(src []byte) string {
 		return "\r\n"
 	}
 	return "\n"
+}
+
+// elementsOnOwnLines reports whether each element of tup starts on its
+// own line (preceded only by whitespace). The byte-splice strategy in
+// insertBefore / appendAfterLast assumes one-element-per-line
+// formatting; rejecting inline forms like `["a", "b"]` here keeps the
+// renderer from producing malformed output.
+func elementsOnOwnLines(src []byte, tup *hclsyntax.TupleConsExpr) bool {
+	for _, expr := range tup.Exprs {
+		r := expr.Range()
+		if r.Start.Byte <= 0 || r.Start.Byte > len(src) {
+			return false
+		}
+		lineStart := bytes.LastIndexByte(src[:r.Start.Byte], '\n') + 1
+		for i := lineStart; i < r.Start.Byte; i++ {
+			if src[i] != ' ' && src[i] != '\t' && src[i] != '\r' {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // elementIndent returns the leading whitespace on the line that

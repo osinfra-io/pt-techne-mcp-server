@@ -6,6 +6,7 @@ package github
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"sort"
 
@@ -148,11 +149,11 @@ func (c *goClient) GetFileInRepo(ctx context.Context, repo, path, ref string) ([
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, "", false, nil
 		}
-		return nil, "", false, err
+		return nil, "", false, fmt.Errorf("get %s/%s@%s: %w", repo, path, ref, err)
 	}
 	body, err := file.GetContent()
 	if err != nil {
-		return nil, "", false, err
+		return nil, "", false, fmt.Errorf("decode %s/%s@%s: %w", repo, path, ref, err)
 	}
 	return []byte(body), file.GetSHA(), true, nil
 }

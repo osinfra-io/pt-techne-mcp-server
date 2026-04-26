@@ -234,6 +234,14 @@ module "core_helpers" { logos_workspaces = ["b"] }
 			wantSub: `cannot infer style for insertion`,
 		},
 		{
+			name: "inline list",
+			src: `module "core_helpers" {
+  logos_workspaces = ["pt-corpus-main-production", "pt-logos-main-production"]
+}
+`,
+			wantSub: `one element per line`,
+		},
+		{
 			name:    "empty workspace input",
 			src:     ptCorpusFixture,
 			wantSub: `workspace is empty`,
