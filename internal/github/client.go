@@ -12,8 +12,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// Repo is the hard-coded target. v0 deliberately has no repo parameter;
-// see docs/auth.md and the open_team_pr design notes.
+// Repo is the hard-coded target. v0 deliberately has no repo parameter.
 const (
 	Owner = "osinfra-io"
 	Repo  = "pt-logos"
@@ -56,7 +55,8 @@ type Client interface {
 // New returns a Client backed by go-github authenticated with the given
 // pre-minted token. The token may be a PAT, an installation token, or
 // the output of `gh auth token` — the server doesn't care; how it's
-// minted is the deployment's responsibility (see docs/auth.md).
+// minted is the deployment's responsibility (see the README's
+// Configuration section for required permissions).
 func New(ctx context.Context, token string) Client {
 	tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token}))
 	return &goClient{api: gh.NewClient(tc)}

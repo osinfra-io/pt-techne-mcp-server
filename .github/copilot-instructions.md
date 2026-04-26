@@ -49,8 +49,8 @@ The allowed list is fixed. Adding a dependency requires explicit discussion.
 - `github.com/santhosh-tekuri/jsonschema/v6` — JSON Schema validation.
 - `github.com/google/go-github/v68` — GitHub PR creation (`open_team_pr`).
 - `golang.org/x/oauth2` — static `TokenSource` for the pre-minted
-  `GITHUB_TOKEN`. No JWT/installation-token library; see
-  [`docs/auth.md`](../docs/auth.md) for why.
+  `GITHUB_TOKEN`. No JWT/installation-token library — token minting is
+  the deployment's job.
 
 Tests use the standard library only — no testify, no mocking framework.
 

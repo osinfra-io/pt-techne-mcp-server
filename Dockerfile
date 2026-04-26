@@ -5,7 +5,7 @@
 #   GITHUB_TOKEN — enables open_team_pr (validate/render work without it).
 #                  Any GH token works: PAT, gh auth token output, or an App
 #                  installation token (e.g. from actions/create-github-app-token).
-#                  See docs/auth.md for required scopes.
+#                  See README "Configuration" for required permissions.
 
 FROM golang:1.26.2-alpine AS build
 WORKDIR /src

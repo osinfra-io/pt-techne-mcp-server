@@ -55,7 +55,7 @@ func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 		if c == nil {
 			return errResult(opError{
 				Code:    "not_configured",
-				Message: "open_team_pr requires GITHUB_TOKEN; see docs/auth.md",
+				Message: "open_team_pr requires GITHUB_TOKEN; see README Configuration",
 			}), nil, nil
 		}
 		if errs := v.Validate(in.Spec); len(errs) > 0 {
