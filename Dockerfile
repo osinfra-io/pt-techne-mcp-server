@@ -1,7 +1,7 @@
 # Multi-stage build: cgo-disabled static Go binary in a scratch image.
 # https://docs.docker.com/build/building/multi-stage/
 
-FROM golang:1.25.8-alpine AS build
+FROM golang:1.26.2-alpine AS build
 WORKDIR /src
 
 COPY go.mod go.sum ./
