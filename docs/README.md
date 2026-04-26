@@ -9,7 +9,8 @@ code.
 cmd/pt-techne-mcp-server/   — main; wires SDK, registers tools, serves stdio
 internal/spec/              — typed Team struct + JSON Schema validator
 internal/render/            — canonical HCL emitter (pt-logos tfvars)
-internal/tools/             — thin MCP adapters around spec+render
+internal/github/            — narrow Client interface + go-github wrapper
+internal/tools/             — thin MCP adapters around spec + render + github
 internal/schemadoc/         — generator for docs/schema.md
 schema/team.schema.json     — single source of truth for the team spec
 docs/                       — human-readable documentation (some generated)
@@ -19,10 +20,12 @@ Hard rules:
 
 - **One concept per file.** No `helpers.go`/`util.go`/`common.go`.
 - **No `pkg/`** — everything is `internal/`.
-- **No interfaces** until there are two implementations.
+- **Interfaces only with two implementations.** `internal/github.Client`
+  is the first one in the repo: real go-github wrapper + in-memory
+  fake under `internal/tools/open_team_pr_test.go`.
 - **No `init()` and no globals.** Wire dependencies in `main.go`.
-- **Total non-test Go LOC under ~1500.** If a change pushes us past that,
-  reconsider the design before merging.
+- **Total non-test Go LOC under ~1500 (soft); 1600 is the
+  "stop and ask" threshold.**
 
 ## How the pieces fit
 
@@ -33,25 +36,46 @@ Hard rules:
                            │ embed
                            ▼
             ┌──────────────────────────────┐
-            │ internal/spec.Validator      │  ← Validate(decoded) /
-            │                              │    ValidateJSON(raw bytes)
+            │ internal/spec.Validator      │
             └──────────────────────────────┘
                            ▲
                            │ uses
-            ┌──────────────────────────────┐
-            │ internal/tools.{Validate,    │  ← MCP adapters
-            │   Render}(server, validator) │
+            ┌──────────────────────────────┐         ┌──────────────────────────┐
+            │ internal/tools.{Validate,    │ ──────► │ internal/render.Render   │
+            │   Render, OpenTeamPR}        │         └──────────────────────────┘
             └──────────┬───────────────────┘
-                       │ on validate-ok, render
+                       │ open_team_pr only
                        ▼
             ┌──────────────────────────────┐
-            │ internal/render.Render       │  ← deterministic HCL emitter
+            │ internal/github.Client       │  ← interface
+            │   ├─ goClient (production)   │
+            │   └─ fakeClient (tests)      │
             └──────────────────────────────┘
 ```
 
 The schema is duplicated into `internal/spec/schema_embed.json` because
 `//go:embed` cannot traverse parent directories. CI fails when the two
 diverge; `make sync-schema` updates the copy.
+
+## `open_team_pr` flow
+
+`open_team_pr` is the only tool that mutates anything. It runs a
+deterministic transaction:
+
+1. Validate (shared validator).
+2. Render (shared renderer) → bytes.
+3. Find any open PR for `team/<team-key>` → `main`.
+4. Resolve branch state via `CompareCommits`: missing → create from
+   main; identical/ahead → reuse; behind → fast-forward; diverged with
+   open PR → error; diverged without an open PR → reset (the branch is
+   disposable when no human PR depends on it).
+5. Read the file at the branch and at `main`. Two noop short-circuits:
+   branch matches AND PR open; or main matches AND no PR.
+6. Commit (with one 409/422 reconciliation retry that may collapse
+   into a noop).
+7. Reuse the open PR (no title/body edit — preserves human edits) or
+   open a new one (with one 422 reconciliation that maps to
+   `action: "updated"` if a parallel call won the race).
 
 ## How to add a new MCP tool
 

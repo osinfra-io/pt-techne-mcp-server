@@ -1,9 +1,11 @@
 // pt-techne-mcp-server is the platform's MCP server. It exposes deterministic,
 // typed tools that platform agents call instead of writing HCL by hand.
 //
-// v0 tools:
+// Tools:
 //   - validate_team_spec  — validate a team spec against schema/team.schema.json
 //   - render_team_tfvars  — render a validated spec to canonical pt-logos tfvars
+//   - open_team_pr        — open or update a PR on osinfra-io/pt-logos with the
+//     rendered tfvars (requires GITHUB_TOKEN)
 //
 // Transport is stdio only.
 package main
@@ -11,9 +13,11 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	gh "github.com/osinfra-io/pt-techne-mcp-server/internal/github"
 	"github.com/osinfra-io/pt-techne-mcp-server/internal/spec"
 	"github.com/osinfra-io/pt-techne-mcp-server/internal/tools"
 )
@@ -22,9 +26,16 @@ import (
 var version = "dev"
 
 func main() {
+	ctx := context.Background()
+
 	v, err := spec.NewValidator()
 	if err != nil {
 		log.Fatalf("init validator: %v", err)
+	}
+
+	var ghClient gh.Client
+	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+		ghClient = gh.New(ctx, token)
 	}
 
 	server := mcp.NewServer(&mcp.Implementation{
@@ -35,8 +46,9 @@ func main() {
 
 	tools.Validate(server, v)
 	tools.Render(server, v)
+	tools.OpenTeamPR(server, v, ghClient)
 
-	if err := server.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
+	if err := server.Run(ctx, &mcp.StdioTransport{}); err != nil {
 		log.Fatalf("server: %v", err)
 	}
 }
