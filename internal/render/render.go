@@ -473,6 +473,10 @@ func (w *writer) merge(other *writer) { w.buf.Write(other.buf.Bytes()) }
 // at the parent indent — matching the on-disk style for `topics` and
 // `google_project_services`. The final element does not get a trailing comma.
 func emitMultilineStringList(w *writer, name string, vs []string) {
+	if len(vs) == 0 {
+		w.line(name + " = []")
+		return
+	}
 	w.line(name + " = [")
 	for i, v := range vs {
 		suffix := ","

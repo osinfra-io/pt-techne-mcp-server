@@ -1,8 +1,8 @@
 // Command schemadoc renders schema/team.schema.json into docs/schema.md.
 //
 // Output is intentionally minimal — one section per top-level field with
-// type, required flag, description, and constraints (pattern/enum). For
-// nested objects we link to the field by JSON Pointer. Run via:
+// type, required flag, description, and constraints (pattern/enum). Nested
+// objects are not expanded. Run via:
 //
 //	make schema-docs
 package main
@@ -35,11 +35,11 @@ func main() {
 	}
 	data, err := os.ReadFile(os.Args[1])
 	if err != nil {
-		die(err)
+		die(fmt.Errorf("read schema %q: %w", os.Args[1], err))
 	}
 	var root schema
 	if err := json.Unmarshal(data, &root); err != nil {
-		die(err)
+		die(fmt.Errorf("parse schema %q: %w", os.Args[1], err))
 	}
 
 	var b strings.Builder
@@ -61,7 +61,7 @@ func main() {
 	}
 
 	if err := os.WriteFile(os.Args[2], []byte(b.String()), 0o644); err != nil {
-		die(err)
+		die(fmt.Errorf("write markdown %q: %w", os.Args[2], err))
 	}
 }
 
@@ -73,11 +73,16 @@ func resolveTeamDef(root *schema) (*schema, error) {
 		if err := json.Unmarshal(teams.AdditionalProperties, &t); err != nil {
 			return nil, fmt.Errorf("unmarshal teams.additionalProperties: %w", err)
 		}
-		if t.Ref != "" && root.Defs != nil {
-			name := strings.TrimPrefix(t.Ref, "#/$defs/")
-			if def, ok := root.Defs[name]; ok {
-				return def, nil
+		if t.Ref != "" {
+			if root.Defs == nil {
+				return nil, fmt.Errorf("resolve %q: schema has no $defs", t.Ref)
 			}
+			name := strings.TrimPrefix(t.Ref, "#/$defs/")
+			def, ok := root.Defs[name]
+			if !ok {
+				return nil, fmt.Errorf("resolve %q: definition %q not found", t.Ref, name)
+			}
+			return def, nil
 		}
 		return &t, nil
 	}

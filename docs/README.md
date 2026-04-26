@@ -85,7 +85,7 @@ there in the right alphabetical position.
   each real pt-logos team. The test renders each one and compares to a
   golden `.tfvars`. **Run with `RENDER_UPDATE=1 go test ./internal/render/...`
   to regenerate goldens after intentional output changes.**
-- **`internal/spec/*_test.go`** (TBA) — table-driven validation cases.
+- **`internal/spec/*_test.go`** — table-driven validation cases.
 
 The parity fixtures are the regression net. If you change the renderer, run
 the parity test and inspect every golden diff.
