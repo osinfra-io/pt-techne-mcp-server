@@ -2,7 +2,6 @@ package render
 
 import (
 	"encoding/json"
-	"flag"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,11 +9,12 @@ import (
 	"github.com/osinfra-io/pt-techne-mcp-server/internal/spec"
 )
 
-// updateGoldens, when set via -update, rewrites golden files instead of
-// asserting against them. Scoped to the test binary; no package globals.
-var updateGoldens = flag.Bool("update", false, "rewrite golden tfvars from current renderer output")
-
 func TestParity(t *testing.T) {
+	// Set RENDER_UPDATE=1 to rewrite golden files from the current
+	// renderer output instead of asserting against them. Scoped to this
+	// test — no package-level state.
+	updateGoldens := os.Getenv("RENDER_UPDATE") == "1"
+
 	// Discover every parity input and assert the renderer reproduces the
 	// canonical golden tfvars. The golden files are the canonical source of
 	// truth — pt-logos files will be regenerated to match.
@@ -42,7 +42,7 @@ func TestParity(t *testing.T) {
 			}
 
 			goldenPath := filepath.Join("testdata/golden", name[:len(name)-len(".json")]+".tfvars")
-			if *updateGoldens {
+			if updateGoldens {
 				if err := os.WriteFile(goldenPath, got, 0o644); err != nil {
 					t.Fatalf("write golden: %v", err)
 				}
@@ -50,7 +50,7 @@ func TestParity(t *testing.T) {
 			}
 			want, err := os.ReadFile(goldenPath)
 			if err != nil {
-				t.Fatalf("read golden: %v (re-run with -update to create)", err)
+				t.Fatalf("read golden: %v (re-run with RENDER_UPDATE=1 to create)", err)
 			}
 			if string(got) != string(want) {
 				t.Errorf("render mismatch for %s\n--- got ---\n%s\n--- want ---\n%s", name, got, want)
