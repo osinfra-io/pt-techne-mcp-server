@@ -24,6 +24,7 @@ import (
 type fakeClient struct {
 	refs       map[string]string // branch -> SHA
 	files      map[string]string // path@ref -> content (blob SHA == content here for simplicity)
+	repoFiles  map[string]string // repo/path@ref -> content (sibling-repo reads via GetFileInRepo)
 	openPRs    []gh.PullRequest
 	compareRes gh.CompareStatus
 
@@ -38,9 +39,10 @@ type fakeClient struct {
 
 func newFake() *fakeClient {
 	return &fakeClient{
-		refs:    map[string]string{"main": "main-sha"},
-		files:   map[string]string{},
-		openPRs: nil,
+		refs:      map[string]string{"main": "main-sha"},
+		files:     map[string]string{},
+		repoFiles: map[string]string{},
+		openPRs:   nil,
 	}
 }
 
@@ -76,6 +78,14 @@ func (f *fakeClient) CompareCommits(_ context.Context, _, _ string) (gh.CompareS
 
 func (f *fakeClient) GetFile(_ context.Context, path, ref string) ([]byte, string, bool, error) {
 	v, ok := f.files[path+"@"+ref]
+	if !ok {
+		return nil, "", false, nil
+	}
+	return []byte(v), "blob-" + v, true, nil
+}
+
+func (f *fakeClient) GetFileInRepo(_ context.Context, repo, path, ref string) ([]byte, string, bool, error) {
+	v, ok := f.repoFiles[repo+"/"+path+"@"+ref]
 	if !ok {
 		return nil, "", false, nil
 	}
