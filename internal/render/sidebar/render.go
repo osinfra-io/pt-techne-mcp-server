@@ -144,11 +144,16 @@ func regionContainsID(region []byte, id string) bool {
 // anchor pair; otherwise returns the first ErrAnchorsMissing.
 func EnsureAnchors(src []byte, sections ...string) error {
 	for _, s := range sections {
-		if _, err := findRegionStart(src, s); err != nil {
+		regionStart, err := findRegionStart(src, s)
+		if err != nil {
 			return err
 		}
-		if _, _, err := findEndregion(src, s); err != nil {
+		endLineStart, _, err := findEndregion(src, s)
+		if err != nil {
 			return err
+		}
+		if endLineStart < regionStart {
+			return &ErrAnchorsMissing{Section: s}
 		}
 	}
 	return nil

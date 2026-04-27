@@ -148,6 +148,20 @@ func TestEnsureAnchors(t *testing.T) {
 	if err := EnsureAnchors([]byte(fixture), "missing-section"); err == nil {
 		t.Errorf("expected ErrAnchorsMissing for absent section")
 	}
+	misordered := []byte(`// @ts-check
+const sidebars = { docs: [{ items: [
+  // endregion: platform-teams
+  // region: platform-teams
+] }] };
+`)
+	err := EnsureAnchors(misordered, "platform-teams")
+	if err == nil {
+		t.Fatalf("expected ErrAnchorsMissing for misordered anchors, got nil")
+	}
+	var anchorsErr *ErrAnchorsMissing
+	if !errAs(err, &anchorsErr) {
+		t.Errorf("misordered anchors: error type = %T, want *ErrAnchorsMissing", err)
+	}
 }
 
 // errAs is a tiny errors.As shim to keep the test file's imports tight.
