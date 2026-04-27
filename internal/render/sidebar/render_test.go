@@ -145,6 +145,9 @@ func TestEnsureAnchors(t *testing.T) {
 	if err := EnsureAnchors([]byte(fixture), "platform-teams", "stream-aligned-teams"); err != nil {
 		t.Errorf("expected nil error, got %v", err)
 	}
+	if err := EnsureAnchors([]byte(fixture), ""); err == nil {
+		t.Errorf("expected error for empty section name")
+	}
 	if err := EnsureAnchors([]byte(fixture), "missing-section"); err == nil {
 		t.Errorf("expected ErrAnchorsMissing for absent section")
 	}

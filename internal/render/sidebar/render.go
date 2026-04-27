@@ -144,6 +144,9 @@ func regionContainsID(region []byte, id string) bool {
 // anchor pair; otherwise returns the first ErrAnchorsMissing.
 func EnsureAnchors(src []byte, sections ...string) error {
 	for _, s := range sections {
+		if s == "" {
+			return fmt.Errorf("sidebar: section is required")
+		}
 		regionStart, err := findRegionStart(src, s)
 		if err != nil {
 			return err
