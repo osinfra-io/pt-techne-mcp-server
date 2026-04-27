@@ -192,12 +192,18 @@ func (c *goClient) ListDirInRepo(ctx context.Context, repo, path, ref string) ([
 }
 
 func (c *goClient) listDir(ctx context.Context, repo, path, ref string) ([]string, bool, error) {
-	_, dir, resp, err := c.api.Repositories.GetContents(ctx, Owner, repo, path, &gh.RepositoryContentGetOptions{Ref: ref})
+	file, dir, resp, err := c.api.Repositories.GetContents(ctx, Owner, repo, path, &gh.RepositoryContentGetOptions{Ref: ref})
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
 			return nil, false, nil
 		}
 		return nil, false, err
+	}
+	// A non-nil file means path resolved to a single file. Treating that
+	// as an empty directory would silently mask a misconfigured caller,
+	// so surface it as an error with full context.
+	if file != nil {
+		return nil, false, fmt.Errorf("%s/%s@%s is a file, not a directory", repo, path, ref)
 	}
 	out := make([]string, 0, len(dir))
 	for _, e := range dir {

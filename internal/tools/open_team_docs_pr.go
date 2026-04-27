@@ -75,13 +75,13 @@ func OpenTeamDocsPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 		folder, _ := docs.TeamFolder(team.TeamKey)
 
 		branch := "team-docs/" + team.TeamKey
-		message := in.Message
-		if message == "" {
-			message = "Add docs for " + team.TeamKey
+		title := in.Message
+		if title == "" {
+			title = "Add docs for " + team.TeamKey
 		}
-		message += coAuthoredTrailer
+		message := title + coAuthoredTrailer
 
-		out, opErr := openTeamDocsPR(ctx, c, &team, indexRes, section, folder, branch, message)
+		out, opErr := openTeamDocsPR(ctx, c, &team, indexRes, section, folder, branch, title, message)
 		if opErr != nil {
 			return errResult(*opErr), nil, nil
 		}
@@ -89,7 +89,7 @@ func OpenTeamDocsPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	})
 }
 
-func openTeamDocsPR(ctx context.Context, c gh.Client, team *spec.Team, indexRes *docs.Result, section, folder, branch, message string) (*OpenTeamDocsPROutput, *opError) {
+func openTeamDocsPR(ctx context.Context, c gh.Client, team *spec.Team, indexRes *docs.Result, section, folder, branch, title, message string) (*OpenTeamDocsPROutput, *opError) {
 	repo := gh.RepoEkklesiaDocs
 
 	openPR, err := findOpenPRInRepo(ctx, c, repo, branch)
@@ -197,7 +197,7 @@ func openTeamDocsPR(ctx context.Context, c gh.Client, team *spec.Team, indexRes 
 			IndexPath: indexRes.Path, SidebarsPath: sidebarsPath,
 		}, nil
 	}
-	pr, action, opErr := createDocsPRWithReconcile(ctx, c, repo, branch, team)
+	pr, action, opErr := createDocsPRWithReconcile(ctx, c, repo, branch, title, team)
 	if opErr != nil {
 		return nil, opErr
 	}
@@ -286,8 +286,7 @@ func commitWithRetryInRepo(ctx context.Context, c gh.Client, repo, path, branch,
 	return commitSHA, nil
 }
 
-func createDocsPRWithReconcile(ctx context.Context, c gh.Client, repo, branch string, team *spec.Team) (gh.PullRequest, string, *opError) {
-	title := "Add docs for " + team.TeamKey
+func createDocsPRWithReconcile(ctx context.Context, c gh.Client, repo, branch, title string, team *spec.Team) (gh.PullRequest, string, *opError) {
 	body := docsPRBody(team)
 	pr, err := c.CreatePRInRepo(ctx, repo, branch, gh.Base, title, body)
 	if err == nil {

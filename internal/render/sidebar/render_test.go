@@ -99,6 +99,25 @@ func TestRenderNoopWhenCategoryAlreadyReferencesID(t *testing.T) {
 	}
 }
 
+func TestRenderMisorderedAnchors(t *testing.T) {
+	// endregion appears before region — must surface ErrAnchorsMissing
+	// instead of panicking on the slice.
+	src := []byte(`// @ts-check
+const sidebars = { docs: [{ items: [
+  // endregion: platform-teams
+  // region: platform-teams
+] }] };
+`)
+	_, err := Render(src, "platform-teams", "foo")
+	if err == nil {
+		t.Fatalf("expected ErrAnchorsMissing, got nil")
+	}
+	var anchorsErr *ErrAnchorsMissing
+	if !errAs(err, &anchorsErr) {
+		t.Errorf("error type: got %T, want *ErrAnchorsMissing", err)
+	}
+}
+
 func TestRenderMissingAnchors(t *testing.T) {
 	src := []byte(`// @ts-check
 const sidebars = { docs: [{ items: [] }] };

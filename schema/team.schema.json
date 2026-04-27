@@ -35,7 +35,7 @@
       "pattern": "^[A-Z][A-Za-z]*( (and|[A-Z][A-Za-z]*))*$"
     },
     "display_name_comment": {
-      "description": "Optional inline comment rendered after display_name. Used for the team etymology blurb. Also used as the `description` frontmatter on the team's docs index page (rendered by render_team_docs_index); that tool requires this field.",
+      "description": "Optional inline comment rendered after display_name. Used for the team etymology blurb. Also used as the `description` frontmatter on the team's docs index page (rendered by pt-techne-mcp-server/render_team_docs_index); that tool requires this field.",
       "type": "string"
     },
     "enable_google_project": {

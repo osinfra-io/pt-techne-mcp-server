@@ -61,6 +61,12 @@ func Render(existing []byte, section, teamFolder string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	// A misordered anchor pair (endregion before region) would otherwise
+	// panic on the slice below. Surface it as the same structured error
+	// callers already handle for missing anchors.
+	if endLineStart < regionStart {
+		return nil, &ErrAnchorsMissing{Section: section}
+	}
 
 	id := section + "/" + teamFolder + "/index"
 	region := existing[regionStart:endLineStart]

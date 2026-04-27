@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/osinfra-io/pt-techne-mcp-server/internal/spec"
@@ -112,18 +113,9 @@ func TestRenderRequiredFields(t *testing.T) {
 			if err == nil {
 				t.Fatalf("expected error containing %q, got nil", tc.want)
 			}
-			if !contains(err.Error(), tc.want) {
+			if !strings.Contains(err.Error(), tc.want) {
 				t.Errorf("error = %q, want containing %q", err.Error(), tc.want)
 			}
 		})
 	}
-}
-
-func contains(s, sub string) bool {
-	for i := 0; i+len(sub) <= len(s); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
 }
