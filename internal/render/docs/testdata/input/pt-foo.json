@@ -1,0 +1,6 @@
+{
+  "team_key": "pt-foo",
+  "team_type": "platform-team",
+  "display_name": "Foo",
+  "display_name_comment": "The example platform team that does foo. Used as a renderer fixture; not a real team."
+}

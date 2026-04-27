@@ -18,7 +18,8 @@ func validSpec() map[string]any {
 		"datadog_team_memberships": map[string]any{
 			"admins": []string{"a@b.com"}, "members": []string{},
 		},
-		"display_name": "Example",
+		"display_name":         "Example",
+		"display_name_comment": "An example team used in tests.",
 		"github_parent_team_memberships": map[string]any{
 			"maintainers": []string{"x"}, "members": []string{},
 		},

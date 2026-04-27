@@ -1,0 +1,74 @@
+// MCP tool: render_sidebar_patch.
+//
+// Inserts the team's docs index entry into a provided pt-ekklesia-docs
+// sidebars.js. Stateless — the caller supplies the current bytes — so
+// the tool can be exercised against any sidebar shape (test fixtures,
+// staged edits) without touching GitHub.
+package tools
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"github.com/osinfra-io/pt-techne-mcp-server/internal/render/docs"
+	"github.com/osinfra-io/pt-techne-mcp-server/internal/render/sidebar"
+	"github.com/osinfra-io/pt-techne-mcp-server/internal/spec"
+)
+
+// RenderSidebarPatchInput is the input for render_sidebar_patch.
+type RenderSidebarPatchInput struct {
+	Spec              map[string]any `json:"spec" jsonschema:"the validated team spec; section/team folder are derived from team_type and team_key"`
+	CurrentSidebarsJS string         `json:"current_sidebars_js" jsonschema:"current contents of pt-ekklesia-docs/sidebars.js"`
+}
+
+// RenderSidebarPatchOutput is the structured result.
+type RenderSidebarPatchOutput struct {
+	Content string `json:"content"`
+}
+
+// RenderSidebarPatch registers the render_sidebar_patch tool.
+func RenderSidebarPatch(s *mcp.Server, v *spec.Validator) {
+	mcp.AddTool(s, &mcp.Tool{
+		Name:        "render_sidebar_patch",
+		Description: "Insert a team's docs index entry into the supplied pt-ekklesia-docs sidebars.js, returning the patched content. Byte-stable noop when the entry is already present. Returns source_parse_error when the // region: <section> / // endregion: <section> anchors are missing.",
+	}, func(_ context.Context, _ *mcp.CallToolRequest, in RenderSidebarPatchInput) (*mcp.CallToolResult, *RenderSidebarPatchOutput, error) {
+		if errs := v.Validate(in.Spec); len(errs) > 0 {
+			body, _ := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
+			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: string(body)}}}, nil, nil
+		}
+		if in.CurrentSidebarsJS == "" {
+			return errResult(opError{Code: "invalid_input", Message: "current_sidebars_js is required"}), nil, nil
+		}
+
+		raw, err := json.Marshal(in.Spec)
+		if err != nil {
+			return nil, nil, fmt.Errorf("re-marshal spec: %w", err)
+		}
+		var team spec.Team
+		if err := json.Unmarshal(raw, &team); err != nil {
+			return nil, nil, fmt.Errorf("decode validated spec: %w", err)
+		}
+		section, err := docs.SectionFor(team.TeamType)
+		if err != nil {
+			return errResult(opError{Code: "docs_input_invalid", Message: err.Error()}), nil, nil
+		}
+		folder, err := docs.TeamFolder(team.TeamKey)
+		if err != nil {
+			return errResult(opError{Code: "docs_input_invalid", Message: err.Error()}), nil, nil
+		}
+
+		out, err := sidebar.Render([]byte(in.CurrentSidebarsJS), section, folder)
+		if err != nil {
+			var anchorsErr *sidebar.ErrAnchorsMissing
+			if errors.As(err, &anchorsErr) {
+				return errResult(opError{Code: "source_parse_error", Message: err.Error()}), nil, nil
+			}
+			return nil, nil, fmt.Errorf("render sidebar: %w", err)
+		}
+		return nil, &RenderSidebarPatchOutput{Content: string(out)}, nil
+	})
+}

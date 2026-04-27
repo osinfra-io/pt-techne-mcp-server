@@ -7,12 +7,16 @@
 //   - open_team_pr            — open or update a PR on osinfra-io/pt-logos with the
 //     rendered tfvars (requires GITHUB_TOKEN)
 //   - list_teams              — summary index of every team in pt-logos@main (requires GITHUB_TOKEN)
-//   - get_team                — parsed spec for one team (requires GITHUB_TOKEN)
+//   - get_team                — parsed spec + docs_pages for one team (requires GITHUB_TOKEN)
 //   - lookup_user             — every team and role a user appears in (requires GITHUB_TOKEN)
 //   - find_repo               — which team owns a github repository (requires GITHUB_TOKEN)
 //   - render_corpus_helpers   — insert a team's main-production workspace into
 //     osinfra-io/pt-corpus/helpers.tofu (requires GITHUB_TOKEN)
 //   - render_pneuma_helpers   — same for osinfra-io/pt-pneuma/helpers.tofu (requires GITHUB_TOKEN)
+//   - render_team_docs_index  — render the team's docs/<section>/<team>/index.md page
+//   - render_sidebar_patch    — patch a supplied pt-ekklesia-docs sidebars.js
+//   - open_team_docs_pr       — open or update a PR on osinfra-io/pt-ekklesia-docs
+//     with the rendered docs index + sidebars patch (requires GITHUB_TOKEN)
 //
 // Transport is stdio only.
 package main
@@ -60,6 +64,9 @@ func main() {
 	tools.FindRepo(server, v, ghClient)
 	tools.RenderCorpusHelpers(server, ghClient)
 	tools.RenderPneumaHelpers(server, ghClient)
+	tools.RenderTeamDocsIndex(server, v)
+	tools.RenderSidebarPatch(server, v)
+	tools.OpenTeamDocsPR(server, v, ghClient)
 
 	if err := server.Run(ctx, &mcp.StdioTransport{}); err != nil {
 		log.Fatalf("server: %v", err)

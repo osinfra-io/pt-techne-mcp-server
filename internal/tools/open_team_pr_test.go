@@ -22,11 +22,13 @@ import (
 // production go-github wrapper). Each field tracks calls so tests can
 // assert "no GitHub calls happened" and which paths fired.
 type fakeClient struct {
-	refs       map[string]string // branch -> SHA
-	files      map[string]string // path@ref -> content (blob SHA == content here for simplicity)
-	repoFiles  map[string]string // repo/path@ref -> content (sibling-repo reads via GetFileInRepo)
-	openPRs    []gh.PullRequest
-	compareRes gh.CompareStatus
+	refs        map[string]string // branch -> SHA
+	files       map[string]string // path@ref -> content (blob SHA == content here for simplicity)
+	repoFiles   map[string]string // repo/path@ref -> content (sibling-repo reads via GetFileInRepo)
+	repoRefs    map[string]string // repo/branch -> SHA (cross-repo write surface)
+	repoOpenPRs map[string][]gh.PullRequest
+	openPRs     []gh.PullRequest
+	compareRes  gh.CompareStatus
 
 	// fault injection
 	createPRConflictThenSucceed bool
@@ -39,10 +41,12 @@ type fakeClient struct {
 
 func newFake() *fakeClient {
 	return &fakeClient{
-		refs:      map[string]string{"main": "main-sha"},
-		files:     map[string]string{},
-		repoFiles: map[string]string{},
-		openPRs:   nil,
+		refs:        map[string]string{"main": "main-sha"},
+		files:       map[string]string{},
+		repoFiles:   map[string]string{},
+		repoRefs:    map[string]string{},
+		repoOpenPRs: map[string][]gh.PullRequest{},
+		openPRs:     nil,
 	}
 }
 
@@ -144,6 +148,92 @@ func (f *fakeClient) CreatePR(_ context.Context, _, _, _, _ string) (gh.PullRequ
 	f.prsCreated++
 	pr := gh.PullRequest{Number: 100, URL: "https://github.com/osinfra-io/pt-logos/pull/100"}
 	f.openPRs = []gh.PullRequest{pr}
+	return pr, nil
+}
+
+// Cross-repo (*InRepo) surface. Tests for open_team_docs_pr drive these
+// directly; tests for open_team_pr never touch them, so the fake can
+// hold both surfaces without coupling.
+
+func (f *fakeClient) ListDirInRepo(_ context.Context, repo, path, ref string) ([]string, bool, error) {
+	prefix := repo + "/" + path + "/"
+	suffix := "@" + ref
+	seen := map[string]struct{}{}
+	var out []string
+	for k := range f.repoFiles {
+		if !strings.HasPrefix(k, prefix) || !strings.HasSuffix(k, suffix) {
+			continue
+		}
+		name := k[len(prefix) : len(k)-len(suffix)]
+		if _, dup := seen[name]; dup {
+			continue
+		}
+		seen[name] = struct{}{}
+		out = append(out, name)
+	}
+	sort.Strings(out)
+	if len(out) == 0 {
+		return nil, false, nil
+	}
+	return out, true, nil
+}
+
+func (f *fakeClient) GetRefInRepo(_ context.Context, repo, branch string) (string, bool, error) {
+	sha, ok := f.repoRefs[repo+"/"+branch]
+	return sha, ok, nil
+}
+
+func (f *fakeClient) CreateRefInRepo(_ context.Context, repo, branch, fromSHA string) error {
+	f.created++
+	f.repoRefs[repo+"/"+branch] = fromSHA
+	return nil
+}
+
+func (f *fakeClient) UpdateRefInRepo(_ context.Context, repo, branch, toSHA string, _ bool) error {
+	f.updated++
+	f.repoRefs[repo+"/"+branch] = toSHA
+	return nil
+}
+
+func (f *fakeClient) DeleteRefInRepo(_ context.Context, repo, branch string) error {
+	f.deleted++
+	delete(f.repoRefs, repo+"/"+branch)
+	return nil
+}
+
+func (f *fakeClient) CompareCommitsInRepo(_ context.Context, _, _, _ string) (gh.CompareStatus, error) {
+	if f.compareRes == "" {
+		return gh.StatusIdentical, nil
+	}
+	return f.compareRes, nil
+}
+
+func (f *fakeClient) CreateOrUpdateFileInRepo(_ context.Context, repo, path, branch, _ string, content []byte, _ string) (string, error) {
+	if f.commitConflictThenSucceed {
+		f.commitConflictThenSucceed = false
+		if f.commitConflictMatchesAfter {
+			f.repoFiles[repo+"/"+path+"@"+branch] = string(content)
+		}
+		return "", fakeConflict()
+	}
+	f.committed++
+	f.repoFiles[repo+"/"+path+"@"+branch] = string(content)
+	return "commit-sha-" + repo + "-" + branch, nil
+}
+
+func (f *fakeClient) ListOpenPRsInRepo(_ context.Context, repo, _, _ string) ([]gh.PullRequest, error) {
+	return f.repoOpenPRs[repo], nil
+}
+
+func (f *fakeClient) CreatePRInRepo(_ context.Context, repo, _, _, _, _ string) (gh.PullRequest, error) {
+	if f.createPRConflictThenSucceed {
+		f.createPRConflictThenSucceed = false
+		f.repoOpenPRs[repo] = []gh.PullRequest{{Number: 99, URL: "https://github.com/osinfra-io/" + repo + "/pull/99"}}
+		return gh.PullRequest{}, fakeConflict()
+	}
+	f.prsCreated++
+	pr := gh.PullRequest{Number: 100, URL: "https://github.com/osinfra-io/" + repo + "/pull/100"}
+	f.repoOpenPRs[repo] = []gh.PullRequest{pr}
 	return pr, nil
 }
 

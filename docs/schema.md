@@ -21,7 +21,7 @@ Team display name. Title Case; spaces and the lowercase word "and" are allowed.
 
 ## `display_name_comment`
 
-Optional inline comment rendered after display_name. Used for the team etymology blurb.
+Optional inline comment rendered after display_name. Used for the team etymology blurb. Also used as the `description` frontmatter on the team's docs index page (rendered by render_team_docs_index); that tool requires this field.
 
 - **type:** `string`
 - **required:** false
