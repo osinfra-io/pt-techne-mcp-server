@@ -37,6 +37,11 @@ func (e *ErrAnchorsMissing) Error() string {
 	return fmt.Sprintf("sidebars.js: missing or malformed // region: %s / // endregion: %s anchor pair", e.Section, e.Section)
 }
 
+// maxSidebarBytes bounds the input size accepted by Render. Real
+// sidebars.js files are <100 KiB; this cap exists purely to make the
+// allocation in Render obviously unable to overflow.
+const maxSidebarBytes = 10 << 20 // 10 MiB
+
 // Render appends a plain `'<section>/<team_folder>/index'` entry to the
 // region for section. If the entry is already present (in any form —
 // either as a plain string or as a category referencing the same id),
@@ -51,6 +56,9 @@ func Render(existing []byte, section, teamFolder string) ([]byte, error) {
 	}
 	if teamFolder == "" {
 		return nil, fmt.Errorf("sidebar: team_folder is required")
+	}
+	if len(existing) > maxSidebarBytes {
+		return nil, fmt.Errorf("sidebar: input is %d bytes, exceeds %d byte cap", len(existing), maxSidebarBytes)
 	}
 
 	regionStart, err := findRegionStart(existing, section)
