@@ -8,7 +8,7 @@ require (
 	github.com/modelcontextprotocol/go-sdk v1.5.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/zclconf/go-cty v1.18.1
-	golang.org/x/oauth2 v0.35.0
+	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.20.0
 	golang.org/x/text v0.36.0
 )
