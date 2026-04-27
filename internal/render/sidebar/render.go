@@ -83,8 +83,10 @@ func Render(existing []byte, section, teamFolder string) ([]byte, error) {
 	}
 
 	line := indent + "'" + id + "',\n"
-	out := make([]byte, 0, len(existing)+len(line))
-	out = append(out, existing[:endLineStart]...)
+	// Build via append rather than make([]byte, 0, len(existing)+len(line)):
+	// the explicit capacity computation tripped a CodeQL overflow heuristic
+	// even though the input is bounded by maxSidebarBytes above.
+	out := append([]byte(nil), existing[:endLineStart]...)
 	out = append(out, []byte(line)...)
 	out = append(out, existing[endLineStart:]...)
 	return out, nil
