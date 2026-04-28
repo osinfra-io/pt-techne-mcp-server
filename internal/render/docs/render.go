@@ -1,8 +1,8 @@
 // Package docs renders a deterministic team-index Markdown page for the
 // pt-ekklesia-docs Docusaurus site.
 //
-// Output is the minimum stub humans extend with Bounded Context,
-// Ubiquitous Language, ADRs, and so on. The renderer never overwrites
+// Output is the minimum stub humans extend with Context, Glossary,
+// ADRs, and so on. The renderer never overwrites
 // hand-authored content — open_team_docs_pr is only meant to land the
 // initial page; subsequent edits stay human-driven.
 //
