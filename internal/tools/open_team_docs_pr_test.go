@@ -80,7 +80,7 @@ func TestOpenDocsPR_HappyCreate(t *testing.T) {
 	if out.Action != "created" {
 		t.Errorf("action=%q want created", out.Action)
 	}
-	if out.IndexPath != "docs/platform-teams/example/index.md" {
+	if out.IndexPath != "docs/platform-grouping/example/index.md" {
 		t.Errorf("index_path=%q", out.IndexPath)
 	}
 	if out.SidebarsPath != "sidebars.js" {
@@ -155,15 +155,15 @@ func specToTeamForTest(t *testing.T, m map[string]any) *spec.Team {
 func patchedSidebarsForTest(t *testing.T) string {
 	t.Helper()
 	// Mirror what the renderer would produce for validSpec on the
-	// fixture: append the entry before the platform-teams endregion.
+	// fixture: append the entry before the platform-grouping endregion.
 	return `// @ts-check
 const sidebars = {
   docs: [
     { items: [
-      // region: platform-teams
-      'platform-teams/logos/index',
-      'platform-teams/example/index',
-      // endregion: platform-teams
+      // region: platform-grouping
+      'platform-grouping/logos/index',
+      'platform-grouping/example/index',
+      // endregion: platform-grouping
     ]},
   ],
 };

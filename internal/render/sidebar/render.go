@@ -47,7 +47,7 @@ const maxSidebarBytes = 10 << 20 // 10 MiB
 // either as a plain string or as a category referencing the same id),
 // the input bytes are returned unchanged.
 //
-// section is the Docusaurus section folder (e.g. "platform-teams") and
+// section is the Docusaurus section folder (e.g. "platform-grouping") and
 // teamFolder is the team's folder name within that section (e.g. "logos").
 // Both must be non-empty.
 func Render(existing []byte, section, teamFolder string) ([]byte, error) {

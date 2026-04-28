@@ -59,7 +59,7 @@ func TestRenderPathDerivation(t *testing.T) {
 	cases := []struct {
 		teamKey, teamType, wantPath string
 	}{
-		{"pt-logos", "platform-team", "docs/platform-teams/logos/index.md"},
+		{"pt-logos", "platform-team", "docs/platform-grouping/logos/index.md"},
 		{"st-ethos", "stream-aligned-team", "docs/stream-aligned-teams/ethos/index.md"},
 		{"ct-mysterion", "complicated-subsystem-team", "docs/complicated-subsystem-teams/mysterion/index.md"},
 		{"et-soteria", "enabling-team", "docs/enabling-teams/soteria/index.md"},

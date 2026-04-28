@@ -84,7 +84,7 @@ func Render(t *spec.Team) (*Result, error) {
 func SectionFor(teamType string) (string, error) {
 	switch teamType {
 	case "platform-team":
-		return "platform-teams", nil
+		return "platform-grouping", nil
 	case "stream-aligned-team":
 		return "stream-aligned-teams", nil
 	case "complicated-subsystem-team":
