@@ -16,9 +16,9 @@ const sidebarsFixture = `// @ts-check
 const sidebars = {
   docs: [
     { items: [
-      // region: platform-teams
-      'platform-teams/logos/index',
-      // endregion: platform-teams
+      // region: platform-grouping
+      'platform-grouping/logos/index',
+      // endregion: platform-grouping
     ]},
   ],
 };
@@ -62,7 +62,7 @@ func TestRenderTeamDocsIndex_Happy(t *testing.T) {
 	if err := json.Unmarshal(structuredOrText(t, res), &out); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if out.Path != "docs/platform-teams/example/index.md" {
+	if out.Path != "docs/platform-grouping/example/index.md" {
 		t.Errorf("path=%q", out.Path)
 	}
 	for _, want := range []string{"sidebar_label: Example", "description: An example team used in tests.", "# Example"} {
@@ -112,7 +112,7 @@ func TestRenderSidebarPatch_Insert(t *testing.T) {
 	if err := json.Unmarshal(structuredOrText(t, res), &out); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if !strings.Contains(out.Content, "'platform-teams/example/index',") {
+	if !strings.Contains(out.Content, "'platform-grouping/example/index',") {
 		t.Errorf("expected new entry; got:\n%s", out.Content)
 	}
 }

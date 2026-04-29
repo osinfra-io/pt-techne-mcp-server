@@ -13,18 +13,18 @@ const sidebars = {
   docs: [
     {
       type: 'category',
-      label: 'Platform Teams',
+      label: 'Platform Grouping',
       items: [
-        // region: platform-teams
+        // region: platform-grouping
         {
           type: 'category',
           label: 'Logos',
-          link: { type: 'doc', id: 'platform-teams/logos/index' },
+          link: { type: 'doc', id: 'platform-grouping/logos/index' },
           items: [
-            'platform-teams/logos/resource-hierarchy',
+            'platform-grouping/logos/resource-hierarchy',
           ],
         },
-        // endregion: platform-teams
+        // endregion: platform-grouping
       ],
     },
     {
@@ -57,7 +57,7 @@ func TestRenderInsertIntoEmptyRegion(t *testing.T) {
 }
 
 func TestRenderInsertIntoPopulatedRegion(t *testing.T) {
-	got, err := Render([]byte(fixture), "platform-teams", "corpus")
+	got, err := Render([]byte(fixture), "platform-grouping", "corpus")
 	if err != nil {
 		t.Fatalf("render: %v", err)
 	}
@@ -65,7 +65,7 @@ func TestRenderInsertIntoPopulatedRegion(t *testing.T) {
 	if !strings.Contains(string(got), "label: 'Logos',\n") {
 		t.Errorf("existing Logos entry was disturbed; got:\n%s", got)
 	}
-	if !strings.Contains(string(got), "        'platform-teams/corpus/index',\n        // endregion: platform-teams") {
+	if !strings.Contains(string(got), "        'platform-grouping/corpus/index',\n        // endregion: platform-grouping") {
 		t.Errorf("new entry not placed at end of region; got:\n%s", got)
 	}
 }
@@ -74,13 +74,13 @@ func TestRenderNoopWhenPlainEntryAlreadyPresent(t *testing.T) {
 	src := []byte(`// @ts-check
 const sidebars = {
   docs: [{ items: [
-    // region: platform-teams
-    'platform-teams/logos/index',
-    // endregion: platform-teams
+    // region: platform-grouping
+    'platform-grouping/logos/index',
+    // endregion: platform-grouping
   ]}],
 };
 `)
-	got, err := Render(src, "platform-teams", "logos")
+	got, err := Render(src, "platform-grouping", "logos")
 	if err != nil {
 		t.Fatalf("render: %v", err)
 	}
@@ -90,7 +90,7 @@ const sidebars = {
 }
 
 func TestRenderNoopWhenCategoryAlreadyReferencesID(t *testing.T) {
-	got, err := Render([]byte(fixture), "platform-teams", "logos")
+	got, err := Render([]byte(fixture), "platform-grouping", "logos")
 	if err != nil {
 		t.Fatalf("render: %v", err)
 	}
@@ -104,11 +104,11 @@ func TestRenderMisorderedAnchors(t *testing.T) {
 	// instead of panicking on the slice.
 	src := []byte(`// @ts-check
 const sidebars = { docs: [{ items: [
-  // endregion: platform-teams
-  // region: platform-teams
+  // endregion: platform-grouping
+  // region: platform-grouping
 ] }] };
 `)
-	_, err := Render(src, "platform-teams", "foo")
+	_, err := Render(src, "platform-grouping", "foo")
 	if err == nil {
 		t.Fatalf("expected ErrAnchorsMissing, got nil")
 	}
@@ -122,7 +122,7 @@ func TestRenderMissingAnchors(t *testing.T) {
 	src := []byte(`// @ts-check
 const sidebars = { docs: [{ items: [] }] };
 `)
-	_, err := Render(src, "platform-teams", "foo")
+	_, err := Render(src, "platform-grouping", "foo")
 	if err == nil {
 		t.Fatalf("expected ErrAnchorsMissing, got nil")
 	}
@@ -136,13 +136,13 @@ func TestRenderInputValidation(t *testing.T) {
 	if _, err := Render([]byte(fixture), "", "foo"); err == nil {
 		t.Errorf("empty section should fail")
 	}
-	if _, err := Render([]byte(fixture), "platform-teams", ""); err == nil {
+	if _, err := Render([]byte(fixture), "platform-grouping", ""); err == nil {
 		t.Errorf("empty teamFolder should fail")
 	}
 }
 
 func TestEnsureAnchors(t *testing.T) {
-	if err := EnsureAnchors([]byte(fixture), "platform-teams", "stream-aligned-teams"); err != nil {
+	if err := EnsureAnchors([]byte(fixture), "platform-grouping", "stream-aligned-teams"); err != nil {
 		t.Errorf("expected nil error, got %v", err)
 	}
 	if err := EnsureAnchors([]byte(fixture), ""); err == nil {
@@ -153,11 +153,11 @@ func TestEnsureAnchors(t *testing.T) {
 	}
 	misordered := []byte(`// @ts-check
 const sidebars = { docs: [{ items: [
-  // endregion: platform-teams
-  // region: platform-teams
+  // endregion: platform-grouping
+  // region: platform-grouping
 ] }] };
 `)
-	err := EnsureAnchors(misordered, "platform-teams")
+	err := EnsureAnchors(misordered, "platform-grouping")
 	if err == nil {
 		t.Fatalf("expected ErrAnchorsMissing for misordered anchors, got nil")
 	}
@@ -185,7 +185,7 @@ func TestRenderAgainstRealFixture(t *testing.T) {
 	if err != nil {
 		t.Skipf("real fixture missing at %s: %v", path, err)
 	}
-	for _, section := range []string{"platform-teams", "stream-aligned-teams", "complicated-subsystem-teams", "enabling-teams"} {
+	for _, section := range []string{"platform-grouping", "stream-aligned-teams", "complicated-subsystem-teams", "enabling-teams"} {
 		out, err := Render(src, section, "newteam")
 		if err != nil {
 			t.Errorf("render %s: %v", section, err)
