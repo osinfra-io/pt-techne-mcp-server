@@ -28,21 +28,21 @@ Optional inline comment rendered after display_name. Used for the team etymology
 
 ## `enable_google_project`
 
-Enable a Google Cloud project for this team.
+Enable a Google Cloud project for this team in the team's environment folder via pt-corpus. Default: false.
 
 - **type:** `boolean`
 - **required:** false
 
 ## `enable_opentofu_state_management`
 
-Enable OpenTofu state management. Requires enable_workflows = true.
+Enable OpenTofu state management. Requires enable_workflows = true. When true, creates a GCS state storage bucket and grants the GitHub Actions service account Storage Object Admin and Cloud KMS CryptoKey Encrypter/Decrypter IAM roles.
 
 - **type:** `boolean`
 - **required:** false
 
 ## `enable_workflows`
 
-Enable GitHub Actions service account, workload identity federation, and group memberships.
+Enable GitHub Actions CI/CD integration. When true, creates a GCP service account for GitHub Actions, Workload Identity Federation bindings (one per repository with enable_google_wif_service_account = true), and group memberships for console browse access, billing account viewer, and Artifact Registry write access.
 
 - **type:** `boolean`
 - **required:** false
@@ -63,7 +63,7 @@ GitHub parent team memberships. All team members should be listed here. Use GitH
 
 ## `github_repositories`
 
-GitHub repositories owned by this team.
+GitHub repositories owned by this team. Key is the repository name. Each repository is provisioned with squash-only merges, a branch ruleset (signed commits, linear history, PR reviews), Datadog webhook, and standard repository files.
 
 - **type:** `object`
 - **required:** false
@@ -112,7 +112,7 @@ pt-corpus only. Per-environment shared VPC (XPN) admin access for pt-corpus serv
 
 ## `platform_managed_project`
 
-Platform-managed project configuration. Drives creation of GKE clusters and managed data services in pt-corpus.
+Platform-managed project configuration. Presence of this block drives creation of a shared GCP project in pt-corpus that hosts GKE clusters or managed data services (Cloud SQL). The project is provisioned in the team's environment folder using the Arche modules. Omit entirely if the team needs neither.
 
 - **type:** `object`
 - **required:** false

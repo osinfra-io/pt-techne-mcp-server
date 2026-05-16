@@ -39,15 +39,15 @@
       "type": "string"
     },
     "enable_google_project": {
-      "description": "Enable a Google Cloud project for this team.",
+      "description": "Enable a Google Cloud project for this team in the team's environment folder via pt-corpus. Default: false.",
       "type": "boolean"
     },
     "enable_opentofu_state_management": {
-      "description": "Enable OpenTofu state management. Requires enable_workflows = true.",
+      "description": "Enable OpenTofu state management. Requires enable_workflows = true. When true, creates a GCS state storage bucket and grants the GitHub Actions service account Storage Object Admin and Cloud KMS CryptoKey Encrypter/Decrypter IAM roles.",
       "type": "boolean"
     },
     "enable_workflows": {
-      "description": "Enable GitHub Actions service account, workload identity federation, and group memberships.",
+      "description": "Enable GitHub Actions CI/CD integration. When true, creates a GCP service account for GitHub Actions, Workload Identity Federation bindings (one per repository with enable_google_wif_service_account = true), and group memberships for console browse access, billing account viewer, and Artifact Registry write access.",
       "type": "boolean"
     },
     "github_child_teams_memberships": {
@@ -60,7 +60,7 @@
       "$ref": "#/$defs/githubMembership"
     },
     "github_repositories": {
-      "description": "GitHub repositories owned by this team.",
+      "description": "GitHub repositories owned by this team. Key is the repository name. Each repository is provisioned with squash-only merges, a branch ruleset (signed commits, linear history, PR reviews), Datadog webhook, and standard repository files.",
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/githubRepository" }
     },
@@ -97,7 +97,7 @@
       "$ref": "#/$defs/envScopedGoogleGroups"
     },
     "platform_managed_project": {
-      "description": "Platform-managed project configuration. Drives creation of GKE clusters and managed data services in pt-corpus.",
+      "description": "Platform-managed project configuration. Presence of this block drives creation of a shared GCP project in pt-corpus that hosts GKE clusters or managed data services (Cloud SQL). The project is provisioned in the team's environment folder using the Arche modules. Omit entirely if the team needs neither.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -189,16 +189,29 @@
           "description": "Repository description shown on the homepage.",
           "type": "string"
         },
-        "enable_datadog_secrets": { "type": "boolean" },
-        "enable_datadog_webhook": { "type": "boolean" },
-        "enable_google_wif_service_account": { "type": "boolean" },
-        "enable_ruleset": { "type": "boolean" },
+        "enable_datadog_secrets": {
+          "description": "Adds DD_API_KEY and DD_APP_KEY to repository secrets using the team's per-team Datadog service account credentials.",
+          "type": "boolean"
+        },
+        "enable_datadog_webhook": {
+          "description": "Configures a webhook to send repository events to Datadog for deployment tracking and CI visibility. Default: true.",
+          "type": "boolean"
+        },
+        "enable_google_wif_service_account": {
+          "description": "Creates a Workload Identity Federation IAM binding so this repository's GitHub Actions workflows can authenticate to GCP via OIDC using the team's service account. Set true only for repositories that deploy infrastructure or push images to GCP.",
+          "type": "boolean"
+        },
+        "enable_ruleset": {
+          "description": "Enforces linear history, signed commits, pull request reviews, and code owner approval on the default branch via a branch ruleset. Default: true. Set false only for repositories that manage their own branch protection or do not need it (e.g., documentation-only or archive repos).",
+          "type": "boolean"
+        },
         "environments": {
           "type": "object",
           "additionalProperties": { "$ref": "#/$defs/githubEnvironment" }
         },
         "pages": { "$ref": "#/$defs/githubPages" },
         "topics": {
+          "description": "Repository topics for GitHub categorization and discovery. The first two entries must always be the team key (e.g. \"pt-logos\") and the team type (e.g. \"platform-team\"). Additional technology topics follow (e.g. \"opentofu\", \"kubernetes\").",
           "type": "array",
           "minItems": 2,
           "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
@@ -251,6 +264,7 @@
       }
     },
     "cloudSQL": {
+      "description": "Cloud SQL instance configuration. pt-corpus provisions one instance per declared region using the pt-arche-google-cloud-sql module. Each instance receives a private IP address through the Shared VPC peering connection managed by pt-corpus.",
       "type": "object",
       "additionalProperties": false,
       "required": ["regions"],
@@ -287,11 +301,15 @@
       }
     },
     "gkeLocation": {
+      "description": "GKE cluster configuration for a specific GCP zone. Cluster names are derived automatically as {team-key}-{zone} (e.g. pt-pneuma-us-east1-b). The control plane is always regional; specifying a zone pins node pools to that zone to avoid Istio cross-zone hotspots.",
       "type": "object",
       "additionalProperties": false,
       "required": ["node_pools", "subnet"],
       "properties": {
-        "enable_gke_hub_host": { "type": "boolean" },
+        "enable_gke_hub_host": {
+          "description": "Set true for exactly ONE cluster across ALL teams to designate it as the GKE fleet host. The fleet host manages multi-cluster service discovery (MCS), cross-cluster ingress, and fleet-wide policies. All other clusters register to this host. Default: false.",
+          "type": "boolean"
+        },
         "node_pools": {
           "type": "object",
           "minProperties": 1,
