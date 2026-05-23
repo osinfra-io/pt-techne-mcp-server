@@ -21,8 +21,8 @@ import (
 
 // OpenTeamPRInput is the input for open_team_pr.
 type OpenTeamPRInput struct {
-	Spec    map[string]any `json:"spec" jsonschema:"the validated team spec to commit and PR"`
-	Message string         `json:"message,omitempty" jsonschema:"optional commit/PR title override; defaults to 'Update teams/<team-key>.tfvars'"`
+	Spec    any    `json:"spec" jsonschema:"the validated team spec to commit and PR"`
+	Message string `json:"message,omitempty" jsonschema:"optional commit/PR title override; defaults to 'Update teams/<team-key>.tfvars'"`
 }
 
 // OpenTeamPROutput is the structured result of open_team_pr.
@@ -58,7 +58,11 @@ func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 				Message: "open_team_pr requires GITHUB_TOKEN; see README Configuration",
 			}), nil, nil
 		}
-		if errs := v.Validate(in.Spec); len(errs) > 0 {
+		specMap, err := coerceSpec(in.Spec)
+		if err != nil {
+			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
+		}
+		if errs := v.Validate(specMap); len(errs) > 0 {
 			body, _ := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
 			return &mcp.CallToolResult{
 				IsError: true,
@@ -66,7 +70,7 @@ func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			}, nil, nil
 		}
 
-		raw, err := json.Marshal(in.Spec)
+		raw, err := json.Marshal(specMap)
 		if err != nil {
 			return nil, nil, fmt.Errorf("re-marshal spec: %w", err)
 		}

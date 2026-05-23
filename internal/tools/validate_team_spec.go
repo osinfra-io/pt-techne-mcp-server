@@ -18,7 +18,7 @@ import (
 // The spec is accepted as an arbitrary JSON object so callers can pass any
 // shape; validation reports errors against the schema.
 type ValidateInput struct {
-	Spec map[string]any `json:"spec" jsonschema:"the team spec object to validate"`
+	Spec any `json:"spec" jsonschema:"the team spec object to validate"`
 }
 
 // ValidateOutput is the structured result of validate_team_spec.
@@ -33,7 +33,14 @@ func Validate(s *mcp.Server, v *spec.Validator) {
 		Name:        "validate_team_spec",
 		Description: "Validate a team spec object against schema/team.schema.json. Returns {valid, errors[]} with structured per-field errors. Never throws.",
 	}, func(_ context.Context, _ *mcp.CallToolRequest, in ValidateInput) (*mcp.CallToolResult, *ValidateOutput, error) {
-		errs := v.Validate(in.Spec)
+		specMap, err := coerceSpec(in.Spec)
+		if err != nil {
+			return nil, &ValidateOutput{
+				Valid:  false,
+				Errors: []spec.ValidationError{{Path: "", Message: err.Error()}},
+			}, nil
+		}
+		errs := v.Validate(specMap)
 		return nil, &ValidateOutput{
 			Valid:  len(errs) == 0,
 			Errors: errs,
