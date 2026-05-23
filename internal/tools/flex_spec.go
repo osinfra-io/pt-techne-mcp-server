@@ -11,11 +11,17 @@ import (
 func coerceSpec(raw any) (map[string]any, error) {
 	switch v := raw.(type) {
 	case map[string]any:
+		if v == nil {
+			return nil, fmt.Errorf("spec is required")
+		}
 		return v, nil
 	case string:
 		var m map[string]any
 		if err := json.Unmarshal([]byte(v), &m); err != nil {
 			return nil, fmt.Errorf("spec string is not valid JSON: %w", err)
+		}
+		if m == nil {
+			return nil, fmt.Errorf("spec string must decode to a JSON object")
 		}
 		return m, nil
 	case nil:

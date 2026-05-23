@@ -40,3 +40,18 @@ func TestCoerceSpec_Nil(t *testing.T) {
 		t.Fatal("expected error for nil")
 	}
 }
+
+func TestCoerceSpec_TypedNilMap(t *testing.T) {
+	var m map[string]any
+	_, err := coerceSpec(m)
+	if err == nil {
+		t.Fatal("expected error for typed nil map")
+	}
+}
+
+func TestCoerceSpec_NullString(t *testing.T) {
+	_, err := coerceSpec("null")
+	if err == nil {
+		t.Fatal("expected error for JSON null string")
+	}
+}
