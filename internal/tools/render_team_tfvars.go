@@ -14,7 +14,7 @@ import (
 
 // RenderInput is the input for render_team_tfvars.
 type RenderInput struct {
-	Spec map[string]any `json:"spec" jsonschema:"the validated team spec to render"`
+	Spec any `json:"spec" jsonschema:"the validated team spec to render"`
 }
 
 // RenderOutput is the structured result of render_team_tfvars.
@@ -30,7 +30,11 @@ func Render(s *mcp.Server, v *spec.Validator) {
 		Name:        "render_team_tfvars",
 		Description: "Validate then render a team spec to canonical pt-logos tfvars bytes. Returns {tfvars}. On validation failure, returns an isError tool result whose structured content matches validate_team_spec.",
 	}, func(_ context.Context, _ *mcp.CallToolRequest, in RenderInput) (*mcp.CallToolResult, *RenderOutput, error) {
-		if errs := v.Validate(in.Spec); len(errs) > 0 {
+		specMap, err := coerceSpec(in.Spec)
+		if err != nil {
+			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
+		}
+		if errs := v.Validate(specMap); len(errs) > 0 {
 			body, _ := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
 			return &mcp.CallToolResult{
 				IsError: true,
@@ -38,7 +42,7 @@ func Render(s *mcp.Server, v *spec.Validator) {
 			}, nil, nil
 		}
 
-		raw, err := json.Marshal(in.Spec)
+		raw, err := json.Marshal(specMap)
 		if err != nil {
 			return nil, nil, fmt.Errorf("re-marshal spec: %w", err)
 		}

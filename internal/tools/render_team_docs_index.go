@@ -20,7 +20,7 @@ import (
 
 // RenderTeamDocsIndexInput is the input for render_team_docs_index.
 type RenderTeamDocsIndexInput struct {
-	Spec map[string]any `json:"spec" jsonschema:"the validated team spec to render docs for"`
+	Spec any `json:"spec" jsonschema:"the validated team spec to render docs for"`
 }
 
 // RenderTeamDocsIndexOutput is the structured result.
@@ -35,11 +35,15 @@ func RenderTeamDocsIndex(s *mcp.Server, v *spec.Validator) {
 		Name:        "render_team_docs_index",
 		Description: "Validate then render a team spec to the deterministic docs/<section>/<team>/index.md page for osinfra-io/pt-ekklesia-docs. Returns {path, content}. On schema failure returns ValidateOutput; on docs-specific input failure returns docs_input_invalid.",
 	}, func(_ context.Context, _ *mcp.CallToolRequest, in RenderTeamDocsIndexInput) (*mcp.CallToolResult, *RenderTeamDocsIndexOutput, error) {
-		if errs := v.Validate(in.Spec); len(errs) > 0 {
+		specMap, err := coerceSpec(in.Spec)
+		if err != nil {
+			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
+		}
+		if errs := v.Validate(specMap); len(errs) > 0 {
 			body, _ := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: string(body)}}}, nil, nil
 		}
-		raw, err := json.Marshal(in.Spec)
+		raw, err := json.Marshal(specMap)
 		if err != nil {
 			return nil, nil, fmt.Errorf("re-marshal spec: %w", err)
 		}

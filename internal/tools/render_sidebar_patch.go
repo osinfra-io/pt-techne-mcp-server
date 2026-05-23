@@ -21,8 +21,8 @@ import (
 
 // RenderSidebarPatchInput is the input for render_sidebar_patch.
 type RenderSidebarPatchInput struct {
-	Spec              map[string]any `json:"spec" jsonschema:"the validated team spec; section/team folder are derived from team_type and team_key"`
-	CurrentSidebarsJS string         `json:"current_sidebars_js" jsonschema:"current contents of pt-ekklesia-docs/sidebars.js"`
+	Spec              any    `json:"spec" jsonschema:"the validated team spec; section/team folder are derived from team_type and team_key"`
+	CurrentSidebarsJS string `json:"current_sidebars_js" jsonschema:"current contents of pt-ekklesia-docs/sidebars.js"`
 }
 
 // RenderSidebarPatchOutput is the structured result.
@@ -36,7 +36,11 @@ func RenderSidebarPatch(s *mcp.Server, v *spec.Validator) {
 		Name:        "render_sidebar_patch",
 		Description: "Insert a team's docs index entry into the supplied pt-ekklesia-docs sidebars.js, returning the patched content. Byte-stable noop when the entry is already present. Returns source_parse_error when the // region: <section> / // endregion: <section> anchors are missing.",
 	}, func(_ context.Context, _ *mcp.CallToolRequest, in RenderSidebarPatchInput) (*mcp.CallToolResult, *RenderSidebarPatchOutput, error) {
-		if errs := v.Validate(in.Spec); len(errs) > 0 {
+		specMap, err := coerceSpec(in.Spec)
+		if err != nil {
+			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
+		}
+		if errs := v.Validate(specMap); len(errs) > 0 {
 			body, _ := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: string(body)}}}, nil, nil
 		}
@@ -44,7 +48,7 @@ func RenderSidebarPatch(s *mcp.Server, v *spec.Validator) {
 			return errResult(opError{Code: "invalid_input", Message: "current_sidebars_js is required"}), nil, nil
 		}
 
-		raw, err := json.Marshal(in.Spec)
+		raw, err := json.Marshal(specMap)
 		if err != nil {
 			return nil, nil, fmt.Errorf("re-marshal spec: %w", err)
 		}

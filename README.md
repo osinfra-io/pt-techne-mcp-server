@@ -23,6 +23,8 @@ Model Context Protocol (MCP) server providing platform context and tools to AI a
 
 `render_team_tfvars` validates first; on failure it returns an MCP `isError` result with the same structured errors as `validate_team_spec`.
 
+All tools that accept a `spec` parameter (`validate_team_spec`, `render_team_tfvars`, `open_team_pr`, `open_team_docs_pr`, `render_team_docs_index`, `render_sidebar_patch`) accept it as either a JSON object **or** a JSON-encoded string. This handles LLM serialization quirks where the spec is double-encoded during parallel tool calls.
+
 `open_team_pr` validates, renders, and opens-or-updates a PR on `osinfra-io/pt-logos` in one call. It is **idempotent on retry** — identical input + identical repo state returns `action: "noop"`.
 
 `list_teams`, `get_team`, `lookup_user`, and `find_repo` are pure reads against `osinfra-io/pt-logos@main` over the GitHub API. Each call fetches fresh — no in-process caching — so results always reflect the current branch state. Read tools require `GITHUB_TOKEN` for the same reason `open_team_pr` does (the repo is private to the GitHub API without authentication; even read access goes through it). Match semantics:

@@ -133,6 +133,15 @@ SDK auto-derives the JSON Schema from the type — keep the struct shallow
 (no `json.RawMessage`, no embedded interfaces) so the derived schema is
 clean.
 
+**Exception: `Spec any` fields.** LLMs sometimes double-encode object
+parameters as JSON strings during parallel tool calls. The go-sdk validates
+raw JSON against the generated schema *before* unmarshaling into the handler
+struct, so `map[string]any` (which generates `{"type": "object"}`) rejects
+strings at the schema layer. Using `any` generates an unrestricted `{}`
+schema that passes both forms. All spec-accepting tools use `Spec any` +
+the `coerceSpec()` helper in `internal/tools/flex_spec.go` to normalize the
+input to `map[string]any` at handler time.
+
 ## Renderer
 
 `internal/render/render.go` is a hand-written emitter, not a `text/template`.
