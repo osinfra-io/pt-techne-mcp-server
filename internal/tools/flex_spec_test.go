@@ -55,3 +55,27 @@ func TestCoerceSpec_NullString(t *testing.T) {
 		t.Fatal("expected error for JSON null string")
 	}
 }
+
+func TestCoerceSpec_ArrayString(t *testing.T) {
+	_, err := coerceSpec(`[1, 2, 3]`)
+	if err == nil {
+		t.Fatal("expected error for JSON array string")
+	}
+	if got := err.Error(); got != `spec string must decode to a JSON object, got []interface {}` {
+		t.Fatalf("unexpected error message: %s", got)
+	}
+}
+
+func TestCoerceSpec_NumberString(t *testing.T) {
+	_, err := coerceSpec("42")
+	if err == nil {
+		t.Fatal("expected error for JSON number string")
+	}
+}
+
+func TestCoerceSpec_BoolString(t *testing.T) {
+	_, err := coerceSpec("true")
+	if err == nil {
+		t.Fatal("expected error for JSON bool string")
+	}
+}
