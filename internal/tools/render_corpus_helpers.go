@@ -8,6 +8,7 @@ package tools
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -31,6 +32,10 @@ func RenderCorpusHelpers(s *mcp.Server, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "render_corpus_helpers",
 		Description: "Fetch helpers.tofu from osinfra-io/pt-corpus@main and return canonical bytes with '<team_key>-main-production' inserted into logos_workspaces. Idempotent: returns the input bytes unchanged when the workspace is already present. Requires GITHUB_TOKEN.",
+		Annotations: &mcp.ToolAnnotations{
+			Title:        "Render corpus helpers",
+			ReadOnlyHint: true,
+		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in RenderCorpusHelpersInput) (*mcp.CallToolResult, *RenderCorpusHelpersOutput, error) {
 		return renderHelpersTool(ctx, c, "render_corpus_helpers", "pt-corpus", in.TeamKey, func(b []byte) *RenderCorpusHelpersOutput {
 			return &RenderCorpusHelpersOutput{HelpersTofu: string(b)}
@@ -51,7 +56,7 @@ func renderHelpersTool[T any](ctx context.Context, c gh.Client, toolName, repo, 
 	}
 	body, _, exists, err := c.GetFileInRepo(ctx, repo, "helpers.tofu", gh.Base)
 	if err != nil {
-		return errResult(*apiError(err)), nil, nil
+		return errResult(*apiError(fmt.Errorf("%s/helpers.tofu@%s: %w", repo, gh.Base, err))), nil, nil
 	}
 	if !exists {
 		return errResult(opError{Code: "source_parse_error", Message: "helpers.tofu missing at " + repo + "@" + gh.Base}), nil, nil

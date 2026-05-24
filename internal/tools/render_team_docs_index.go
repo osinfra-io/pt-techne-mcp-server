@@ -34,13 +34,20 @@ func RenderTeamDocsIndex(s *mcp.Server, v *spec.Validator) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "render_team_docs_index",
 		Description: "Validate then render a team spec to the deterministic docs/<section>/<team>/index.md page for osinfra-io/pt-ekklesia-docs. Returns {path, content}. On schema failure returns ValidateOutput; on docs-specific input failure returns docs_input_invalid.",
+		Annotations: &mcp.ToolAnnotations{
+			Title:        "Render team docs index",
+			ReadOnlyHint: true,
+		},
 	}, func(_ context.Context, _ *mcp.CallToolRequest, in RenderTeamDocsIndexInput) (*mcp.CallToolResult, *RenderTeamDocsIndexOutput, error) {
 		specMap, err := coerceSpec(in.Spec)
 		if err != nil {
 			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
 		}
 		if errs := v.Validate(specMap); len(errs) > 0 {
-			body, _ := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
+			body, merr := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
+			if merr != nil {
+				return nil, nil, fmt.Errorf("marshal validation errors: %w", merr)
+			}
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: string(body)}}}, nil, nil
 		}
 		raw, err := json.Marshal(specMap)

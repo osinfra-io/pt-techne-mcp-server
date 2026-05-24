@@ -60,6 +60,10 @@ func LookupUser(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "lookup_user",
 		Description: "Find every team and role where a user appears across all teams in osinfra-io/pt-logos@main. Provide exactly one of github_username (matched case-insensitively against GitHub roles) or email (matched case-insensitively against Datadog and Google group roles). Returns {matches: []} (possibly empty) — empty is success, not an error. Requires GITHUB_TOKEN.",
+		Annotations: &mcp.ToolAnnotations{
+			Title:        "Look up user",
+			ReadOnlyHint: true,
+		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in LookupUserInput) (*mcp.CallToolResult, *LookupUserOutput, error) {
 		if c == nil {
 			return notConfigured("lookup_user"), nil, nil
@@ -117,7 +121,7 @@ func scanTeam(t *spec.Team, via, target string) []LookupUserMatch {
 
 	if via == "email" {
 		// Datadog
-		out = append(out, scanGitHub(t.TeamKey, via, target,
+		out = append(out, scanDatadogMemberships(t.TeamKey, via, target,
 			[][]string{t.DatadogTeamMemberships.Admins, t.DatadogTeamMemberships.Members},
 			[]string{"admin", "member"}, "datadog", "team", "")...)
 
@@ -234,11 +238,11 @@ func containsCI(xs []string, target string) bool {
 	return false
 }
 
-// scanGitHub is a small helper that keeps the Datadog block in scanTeam
-// at the same shape as the Google blocks (parallel pairs of slices and
-// labels). Returns matches as a slice. Hard-coded system/scope/subject
-// because Datadog is the only call site.
-func scanGitHub(teamKey, via, target string, lists [][]string, labels []string, system, scope, subject string) []LookupUserMatch {
+// scanDatadogMemberships checks parallel lists of membership strings
+// against a target (case-insensitive) and returns structured matches.
+// Used for Datadog team membership where admins and members are email
+// lists rather than GitHub usernames.
+func scanDatadogMemberships(teamKey, via, target string, lists [][]string, labels []string, system, scope, subject string) []LookupUserMatch {
 	var out []LookupUserMatch
 	for i, list := range lists {
 		if containsCI(list, target) {

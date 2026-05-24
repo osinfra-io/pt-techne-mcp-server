@@ -5,10 +5,12 @@ code.
 
 ## Layout
 
-```
+```none
 cmd/pt-techne-mcp-server/   — main; wires SDK, registers tools, serves stdio
 internal/spec/              — typed Team struct + JSON Schema validator
 internal/render/            — canonical HCL emitter (pt-logos tfvars)
+internal/render/docs/       — team docs index page renderer (pt-ekklesia-docs)
+internal/render/sidebar/    — sidebars.js patcher (pt-ekklesia-docs)
 internal/helpersrender/     — surgical inserter for logos_workspaces in
                               pt-corpus / pt-pneuma helpers.tofu
 internal/github/            — narrow Client interface + go-github wrapper
@@ -24,50 +26,42 @@ Hard rules:
 - **No `pkg/`** — everything is `internal/`.
 - **Interfaces only with two implementations.** `internal/github.Client`
   is the first one in the repo: real go-github wrapper + in-memory
-  fake under `internal/tools/open_team_pr_test.go`.
+  fake under `internal/tools/*_test.go`.
 - **No `init()` and no globals.** Wire dependencies in `main.go`.
-- **Total non-test Go LOC under ~1500 (soft); 1600 is the
-  "stop and ask" threshold.**
+- **Keep non-test Go LOC proportional.** The repo has grown past the
+  original 1500-line target; complexity is acceptable when it maps 1:1
+  to distinct tools. Favour small, focused files over large ones.
 
 ## How the pieces fit
 
-```
-              ┌─────────────────────────┐
-              │ schema/team.schema.json │  ← source of truth
-              └────────────┬────────────┘
-                           │ embed
-                           ▼
-            ┌──────────────────────────────┐
-            │ internal/spec.Validator      │
-            └──────────────────────────────┘
-                           ▲
-                           │ uses
-            ┌──────────────────────────────┐         ┌──────────────────────────┐
-            │ internal/tools.{Validate,    │ ──────► │ internal/render.Render   │
-            │   Render, OpenTeamPR,        │         │ internal/helpersrender   │
-            │   ListTeams, GetTeam,        │         └──────────────────────────┘
-            │   LookupUser, FindRepo,      │
-            │   RenderCorpusHelpers,       │
-            │   RenderPneumaHelpers}       │
-            └──────────┬───────────────────┘
-                       │ all GitHub-backed tools
-                       ▼
-            ┌──────────────────────────────┐
-            │ internal/github.Client       │  ← interface
-            │   ├─ goClient (production)   │
-            │   └─ fakeClient (tests)      │
-            └──────────────────────────────┘
+```mermaid
+graph TD
+    Schema["schema/team.schema.json<br/><i>source of truth</i>"]
+    Validator["internal/spec.Validator"]
+    Tools["internal/tools<br/>Validate, Render, OpenTeamPR,<br/>OpenTeamDocsPR, ListTeams, GetTeam,<br/>LookupUser, FindRepo, RenderCorpusHelpers,<br/>RenderPneumaHelpers, RenderTeamDocsIndex,<br/>RenderSidebarPatch"]
+    Render["internal/render<br/>internal/render/docs<br/>internal/render/sidebar<br/>internal/helpersrender"]
+    GitHub["internal/github.Client<br/><i>interface</i>"]
+    GoProd["goClient (production)"]
+    Fake["fakeClient (tests)"]
+
+    Schema -- embed --> Validator
+    Validator -- uses --> Tools
+    Tools --> Render
+    Tools -- GitHub-backed --> GitHub
+    GitHub --> GoProd
+    GitHub --> Fake
 ```
 
 The schema is duplicated into `internal/spec/schema_embed.json` because
 `//go:embed` cannot traverse parent directories. CI fails when the two
-diverge; `make sync-schema` updates the copy.
+diverge; `cp schema/team.schema.json internal/spec/schema_embed.json` updates
+the copy.
 
 ## Read tools vs write tools
 
-`open_team_pr` is the only **writer**. The four pt-logos readers — `list_teams`,
-`get_team`, `lookup_user`, `find_repo` — share a common shape implemented
-in `internal/tools/team_source.go`:
+`open_team_pr` and `open_team_docs_pr` are **writers**. The four pt-logos
+readers — `list_teams`, `get_team`, `lookup_user`, `find_repo` — share a
+common shape implemented in `internal/tools/team_source.go`:
 
 1. `listTeamFiles` — `ListDir teams/` on `pt-logos@main`.
 2. `fetchAllTeams` — bounded-concurrency fan-out (`errgroup` with
@@ -78,14 +72,18 @@ in `internal/tools/team_source.go`:
 The two helpers renderers — `render_corpus_helpers` and
 `render_pneuma_helpers` — are also reads, but against sibling repos
 (`pt-corpus`, `pt-pneuma`) rather than `pt-logos`. They use
-`Client.GetFileInRepo` (the only cross-repo method on the GitHub
-client; the rest of the surface is pt-logos-only) to fetch each repo's
-`helpers.tofu`, then call `internal/helpersrender.Render` to splice in
-one new line for the team's `<team_key>-main-production` workspace and
-return the canonical updated bytes. No writes — the agent is
-responsible for landing the output (typically by checking the bytes
-into a PR with the same tooling it already uses for `helpers.tofu`
-edits).
+`Client.GetFileInRepo` to fetch each repo's `helpers.tofu`, then call
+`internal/helpersrender.Render` to splice in one new line for the
+team's `<team_key>-main-production` workspace and return the canonical
+updated bytes. No writes — the agent is responsible for landing the
+output (typically by checking the bytes into a PR with the same tooling
+it already uses for `helpers.tofu` edits).
+
+The docs tools (`open_team_docs_pr`, `render_team_docs_index`,
+`render_sidebar_patch`) and `get_team` target `osinfra-io/pt-ekklesia-docs`
+using the same `*InRepo` family of methods on the GitHub client
+(`GetFileInRepo`, `ListDirInRepo`, `GetRefInRepo`,
+`CreateOrUpdateFileInRepo`, `ListOpenPRsInRepo`, `CreatePRInRepo`, etc.).
 
 `spec.Parse` (the inverse of `render.Render`) uses
 `hashicorp/hcl/v2/hclsyntax` to evaluate the `teams` attribute to a cty
@@ -100,8 +98,8 @@ this server's schema does not accept, and retrying will not help.
 
 ## `open_team_pr` flow
 
-`open_team_pr` is the only tool that mutates anything. It runs a
-deterministic transaction:
+`open_team_pr` mutates `osinfra-io/pt-logos`. It runs a deterministic
+transaction:
 
 1. Validate (shared validator).
 2. Render (shared renderer) → bytes.
@@ -117,6 +115,20 @@ deterministic transaction:
 7. Reuse the open PR (no title/body edit — preserves human edits) or
    open a new one (with one 422 reconciliation that maps to
    `action: "updated"` if a parallel call won the race).
+
+## `open_team_docs_pr` flow
+
+`open_team_docs_pr` mutates `osinfra-io/pt-ekklesia-docs`. It follows
+the same idempotent transaction pattern as `open_team_pr` but commits
+two files (the docs index page and `sidebars.js`) on a
+`team-docs/<team_key>` branch:
+
+1. Validate the spec (shared validator).
+2. Render docs index via `internal/render/docs`.
+3. Render sidebar patch via `internal/render/sidebar`.
+4. Resolve branch state (same branch lifecycle as `open_team_pr`).
+5. Per-file commit (index, then sidebars) — each is a noop if unchanged.
+6. Reuse or open PR.
 
 ## How to add a new MCP tool
 
@@ -188,6 +200,13 @@ that fight the byte-identical-noop contract.
 - **`internal/spec/validate_test.go`** — table-driven validation cases.
 - **`internal/tools/read_tools_test.go`** — read-tool tests using the
   in-memory fake seeded with the renderer goldens.
+- **`internal/tools/render_helpers_test.go`** — helpers renderer tests
+  (corpus + pneuma workspace insertion, noop, parse errors).
+- **`internal/tools/docs_render_test.go`** — docs index + sidebar patch
+  renderer tests.
+- **`internal/tools/open_team_docs_pr_test.go`** — end-to-end docs PR
+  transaction test using the in-memory fake.
+- **`internal/tools/flex_spec_test.go`** — double-encoding coercion tests.
 
 The parity fixtures are the regression net. If you change the renderer, run
 the parity test and inspect every golden diff.

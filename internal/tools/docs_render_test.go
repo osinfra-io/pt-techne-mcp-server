@@ -112,8 +112,8 @@ func TestRenderSidebarPatch_Insert(t *testing.T) {
 	if err := json.Unmarshal(structuredOrText(t, res), &out); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if !strings.Contains(out.Content, "'platform-grouping/example/index',") {
-		t.Errorf("expected new entry; got:\n%s", out.Content)
+	if !strings.Contains(out.Content, `id: "platform-grouping/example/index"`) {
+		t.Errorf("expected new category entry; got:\n%s", out.Content)
 	}
 }
 

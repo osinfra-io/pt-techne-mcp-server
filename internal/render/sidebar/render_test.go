@@ -42,22 +42,29 @@ export default sidebars;
 `
 
 func TestRenderInsertIntoEmptyRegion(t *testing.T) {
-	got, err := Render([]byte(fixture), "stream-aligned-teams", "ethos")
+	got, err := Render([]byte(fixture), "stream-aligned-teams", "ethos", "Ethos")
 	if err != nil {
 		t.Fatalf("render: %v", err)
 	}
-	if !strings.Contains(string(got), "'stream-aligned-teams/ethos/index',\n") {
-		t.Fatalf("expected new entry; got:\n%s", got)
+	if !strings.Contains(string(got), `id: "stream-aligned-teams/ethos/index"`) {
+		t.Fatalf("expected new category entry; got:\n%s", got)
 	}
-	// New line must sit just before the endregion marker, indented to match.
-	want := "        'stream-aligned-teams/ethos/index',\n        // endregion: stream-aligned-teams"
+	// New block must sit just before the endregion marker, indented to match.
+	want := "        },\n        // endregion: stream-aligned-teams"
 	if !strings.Contains(string(got), want) {
-		t.Errorf("entry not placed before endregion with matching indent; got:\n%s", got)
+		t.Errorf("category not placed before endregion with matching indent; got:\n%s", got)
+	}
+	// Verify the category structure
+	if !strings.Contains(string(got), `label: "Ethos",`) {
+		t.Errorf("expected label 'Ethos'; got:\n%s", got)
+	}
+	if !strings.Contains(string(got), "items: [],") {
+		t.Errorf("expected empty items; got:\n%s", got)
 	}
 }
 
 func TestRenderInsertIntoPopulatedRegion(t *testing.T) {
-	got, err := Render([]byte(fixture), "platform-grouping", "corpus")
+	got, err := Render([]byte(fixture), "platform-grouping", "corpus", "Corpus")
 	if err != nil {
 		t.Fatalf("render: %v", err)
 	}
@@ -65,8 +72,8 @@ func TestRenderInsertIntoPopulatedRegion(t *testing.T) {
 	if !strings.Contains(string(got), "label: 'Logos',\n") {
 		t.Errorf("existing Logos entry was disturbed; got:\n%s", got)
 	}
-	if !strings.Contains(string(got), "        'platform-grouping/corpus/index',\n        // endregion: platform-grouping") {
-		t.Errorf("new entry not placed at end of region; got:\n%s", got)
+	if !strings.Contains(string(got), `link: { type: 'doc', id: "platform-grouping/corpus/index" },`+"\n") {
+		t.Errorf("new category not placed in region; got:\n%s", got)
 	}
 }
 
@@ -80,7 +87,7 @@ const sidebars = {
   ]}],
 };
 `)
-	got, err := Render(src, "platform-grouping", "logos")
+	got, err := Render(src, "platform-grouping", "logos", "Logos")
 	if err != nil {
 		t.Fatalf("render: %v", err)
 	}
@@ -90,7 +97,7 @@ const sidebars = {
 }
 
 func TestRenderNoopWhenCategoryAlreadyReferencesID(t *testing.T) {
-	got, err := Render([]byte(fixture), "platform-grouping", "logos")
+	got, err := Render([]byte(fixture), "platform-grouping", "logos", "Logos")
 	if err != nil {
 		t.Fatalf("render: %v", err)
 	}
@@ -108,7 +115,7 @@ const sidebars = { docs: [{ items: [
   // region: platform-grouping
 ] }] };
 `)
-	_, err := Render(src, "platform-grouping", "foo")
+	_, err := Render(src, "platform-grouping", "foo", "Foo")
 	if err == nil {
 		t.Fatalf("expected ErrAnchorsMissing, got nil")
 	}
@@ -122,7 +129,7 @@ func TestRenderMissingAnchors(t *testing.T) {
 	src := []byte(`// @ts-check
 const sidebars = { docs: [{ items: [] }] };
 `)
-	_, err := Render(src, "platform-grouping", "foo")
+	_, err := Render(src, "platform-grouping", "foo", "Foo")
 	if err == nil {
 		t.Fatalf("expected ErrAnchorsMissing, got nil")
 	}
@@ -133,11 +140,14 @@ const sidebars = { docs: [{ items: [] }] };
 }
 
 func TestRenderInputValidation(t *testing.T) {
-	if _, err := Render([]byte(fixture), "", "foo"); err == nil {
+	if _, err := Render([]byte(fixture), "", "foo", "Foo"); err == nil {
 		t.Errorf("empty section should fail")
 	}
-	if _, err := Render([]byte(fixture), "platform-grouping", ""); err == nil {
+	if _, err := Render([]byte(fixture), "platform-grouping", "", "Foo"); err == nil {
 		t.Errorf("empty teamFolder should fail")
+	}
+	if _, err := Render([]byte(fixture), "platform-grouping", "foo", ""); err == nil {
+		t.Errorf("empty label should fail")
 	}
 }
 
@@ -186,12 +196,12 @@ func TestRenderAgainstRealFixture(t *testing.T) {
 		t.Skipf("real fixture missing at %s: %v", path, err)
 	}
 	for _, section := range []string{"platform-grouping", "stream-aligned-teams", "complicated-subsystem-teams", "enabling-teams"} {
-		out, err := Render(src, section, "newteam")
+		out, err := Render(src, section, "newteam", "Newteam")
 		if err != nil {
 			t.Errorf("render %s: %v", section, err)
 			continue
 		}
-		want := "'" + section + "/newteam/index',"
+		want := `id: "` + section + `/newteam/index"`
 		if !strings.Contains(string(out), want) {
 			t.Errorf("section %s: expected %q in output", section, want)
 		}

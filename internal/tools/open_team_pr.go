@@ -51,6 +51,10 @@ func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "open_team_pr",
 		Description: "Validate, render, and open-or-update a PR on osinfra-io/pt-logos for the given team spec. Idempotent: returns action=noop when the rendered tfvars already match the branch (with an open PR) or main. Requires GITHUB_TOKEN to be configured at server startup.",
+		Annotations: &mcp.ToolAnnotations{
+			Title:        "Open team PR",
+			ReadOnlyHint: false,
+		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in OpenTeamPRInput) (*mcp.CallToolResult, *OpenTeamPROutput, error) {
 		if c == nil {
 			return errResult(opError{
@@ -63,7 +67,10 @@ func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
 		}
 		if errs := v.Validate(specMap); len(errs) > 0 {
-			body, _ := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
+			body, merr := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
+			if merr != nil {
+				return nil, nil, fmt.Errorf("marshal validation errors: %w", merr)
+			}
 			return &mcp.CallToolResult{
 				IsError: true,
 				Content: []mcp.Content{&mcp.TextContent{Text: string(body)}},
@@ -294,7 +301,10 @@ func prBody(t *spec.Team) string {
 // errResult wraps an opError as an MCP IsError result whose text body is
 // the JSON-encoded structured error.
 func errResult(e opError) *mcp.CallToolResult {
-	body, _ := json.Marshal(e)
+	body, err := json.Marshal(e)
+	if err != nil {
+		body = []byte(`{"code":"marshal_failed","message":"failed to encode error"}`)
+	}
 	return &mcp.CallToolResult{
 		IsError: true,
 		Content: []mcp.Content{&mcp.TextContent{Text: string(body)}},

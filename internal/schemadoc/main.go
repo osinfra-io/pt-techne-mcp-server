@@ -61,7 +61,7 @@ func main() {
 		if field == nil {
 			die(fmt.Errorf("render field %q: schema is null", k))
 		}
-		writeField(&b, k, field, required[k], 2)
+		writeField(&b, k, field, required[k], 2, root.Defs)
 	}
 
 	if err := os.WriteFile(os.Args[2], []byte(b.String()), 0o644); err != nil {
@@ -94,7 +94,21 @@ func resolveTeamDef(root *schema) (*schema, error) {
 	return root, nil
 }
 
-func writeField(b *strings.Builder, name string, s *schema, required bool, depth int) {
+func writeField(b *strings.Builder, name string, s *schema, required bool, depth int, defs map[string]*schema) {
+	// Resolve $ref before rendering. Deep-copy the resolved schema to
+	// avoid mutating the shared definition.
+	if s.Ref != "" && defs != nil {
+		refName := strings.TrimPrefix(s.Ref, "#/$defs/")
+		if resolved, ok := defs[refName]; ok {
+			cp := *resolved
+			// Preserve the parent description if the $ref target lacks one.
+			if s.Description != "" && cp.Description == "" {
+				cp.Description = s.Description
+			}
+			s = &cp
+		}
+	}
+
 	prefix := strings.Repeat("#", depth)
 	fmt.Fprintf(b, "%s `%s`\n\n", prefix, name)
 	if s.Description != "" {

@@ -35,13 +35,20 @@ func RenderSidebarPatch(s *mcp.Server, v *spec.Validator) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "render_sidebar_patch",
 		Description: "Insert a team's docs index entry into the supplied pt-ekklesia-docs sidebars.js, returning the patched content. Byte-stable noop when the entry is already present. Returns source_parse_error when the // region: <section> / // endregion: <section> anchors are missing.",
+		Annotations: &mcp.ToolAnnotations{
+			Title:        "Render sidebar patch",
+			ReadOnlyHint: true,
+		},
 	}, func(_ context.Context, _ *mcp.CallToolRequest, in RenderSidebarPatchInput) (*mcp.CallToolResult, *RenderSidebarPatchOutput, error) {
 		specMap, err := coerceSpec(in.Spec)
 		if err != nil {
 			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
 		}
 		if errs := v.Validate(specMap); len(errs) > 0 {
-			body, _ := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
+			body, merr := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
+			if merr != nil {
+				return nil, nil, fmt.Errorf("marshal validation errors: %w", merr)
+			}
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: string(body)}}}, nil, nil
 		}
 		if in.CurrentSidebarsJS == "" {
@@ -65,7 +72,7 @@ func RenderSidebarPatch(s *mcp.Server, v *spec.Validator) {
 			return errResult(opError{Code: "docs_input_invalid", Message: err.Error()}), nil, nil
 		}
 
-		out, err := sidebar.Render([]byte(in.CurrentSidebarsJS), section, folder)
+		out, err := sidebar.Render([]byte(in.CurrentSidebarsJS), section, folder, team.DisplayName)
 		if err != nil {
 			var anchorsErr *sidebar.ErrAnchorsMissing
 			if errors.As(err, &anchorsErr) {

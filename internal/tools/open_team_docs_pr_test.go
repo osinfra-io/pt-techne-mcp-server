@@ -155,14 +155,19 @@ func specToTeamForTest(t *testing.T, m map[string]any) *spec.Team {
 func patchedSidebarsForTest(t *testing.T) string {
 	t.Helper()
 	// Mirror what the renderer would produce for validSpec on the
-	// fixture: append the entry before the platform-grouping endregion.
+	// fixture: append a category block before the platform-grouping endregion.
 	return `// @ts-check
 const sidebars = {
   docs: [
     { items: [
       // region: platform-grouping
       'platform-grouping/logos/index',
-      'platform-grouping/example/index',
+      {
+        type: 'category',
+        label: "Example",
+        link: { type: 'doc', id: "platform-grouping/example/index" },
+        items: [],
+      },
       // endregion: platform-grouping
     ]},
   ],

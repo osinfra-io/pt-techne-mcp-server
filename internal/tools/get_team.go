@@ -31,6 +31,10 @@ func GetTeam(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "get_team",
 		Description: "Fetch one team's parsed spec from teams/<team_key>.tfvars in osinfra-io/pt-logos@main. Returns {spec: <object>} in the same JSON shape validate_team_spec and render_team_tfvars accept. Requires GITHUB_TOKEN.",
+		Annotations: &mcp.ToolAnnotations{
+			Title:        "Get team",
+			ReadOnlyHint: true,
+		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in GetTeamInput) (*mcp.CallToolResult, *GetTeamOutput, error) {
 		if c == nil {
 			return notConfigured("get_team"), nil, nil

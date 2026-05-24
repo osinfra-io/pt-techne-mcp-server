@@ -1,0 +1,33 @@
+version: "2"
+run:
+  concurrency: 4
+  tests: true
+linters:
+  enable:
+    - bodyclose
+    - errcheck
+    - gocritic
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - revive
+    - staticcheck
+    - unused
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$

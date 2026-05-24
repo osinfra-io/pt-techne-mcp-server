@@ -42,6 +42,10 @@ func ListTeams(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "list_teams",
 		Description: "List every team defined under teams/ in osinfra-io/pt-logos@main, with one summary row per team. Requires GITHUB_TOKEN.",
+		Annotations: &mcp.ToolAnnotations{
+			Title:        "List teams",
+			ReadOnlyHint: true,
+		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, _ ListTeamsInput) (*mcp.CallToolResult, *ListTeamsOutput, error) {
 		if c == nil {
 			return notConfigured("list_teams"), nil, nil

@@ -1,6 +1,6 @@
-// Package sidebar inserts a team's docs index entry into the
+// Package sidebar inserts a team's category entry into the
 // pt-ekklesia-docs sidebars.js file by locating // region:<section>
-// markers and appending a single line just before the matching
+// markers and appending a category block just before the matching
 // // endregion: marker.
 //
 // The renderer is intentionally text-based — sidebars.js is real JS, not
@@ -22,6 +22,7 @@
 package sidebar
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 )
@@ -42,20 +43,24 @@ func (e *ErrAnchorsMissing) Error() string {
 // allocation in Render obviously unable to overflow.
 const maxSidebarBytes = 10 << 20 // 10 MiB
 
-// Render appends a plain `'<section>/<team_folder>/index'` entry to the
-// region for section. If the entry is already present (in any form —
-// either as a plain string or as a category referencing the same id),
-// the input bytes are returned unchanged.
+// Render inserts a category entry for the given team into the region for
+// section. If the entry is already present (in any form — either as a
+// plain string or as a category referencing the same id), the input bytes
+// are returned unchanged.
 //
-// section is the Docusaurus section folder (e.g. "platform-grouping") and
-// teamFolder is the team's folder name within that section (e.g. "logos").
-// Both must be non-empty.
-func Render(existing []byte, section, teamFolder string) ([]byte, error) {
+// section is the Docusaurus section folder (e.g. "platform-grouping"),
+// teamFolder is the team's folder name within that section (e.g. "logos"),
+// and label is the human-readable sidebar label (e.g. "Logos").
+// All must be non-empty.
+func Render(existing []byte, section, teamFolder, label string) ([]byte, error) {
 	if section == "" {
 		return nil, fmt.Errorf("sidebar: section is required")
 	}
 	if teamFolder == "" {
 		return nil, fmt.Errorf("sidebar: team_folder is required")
+	}
+	if label == "" {
+		return nil, fmt.Errorf("sidebar: label is required")
 	}
 	if len(existing) > maxSidebarBytes {
 		return nil, fmt.Errorf("sidebar: input is %d bytes, exceeds %d byte cap", len(existing), maxSidebarBytes)
@@ -82,12 +87,23 @@ func Render(existing []byte, section, teamFolder string) ([]byte, error) {
 		return existing, nil
 	}
 
-	line := indent + "'" + id + "',\n"
-	// Build via append rather than make([]byte, 0, len(existing)+len(line)):
+	// Emit a category block matching the established pattern in sidebars.js.
+	// JSON-encode dynamic strings to prevent JS injection from labels
+	// containing quotes or newlines.
+	safeLabel, _ := json.Marshal(label)
+	safeID, _ := json.Marshal(id)
+	block := indent + "{\n" +
+		indent + "  type: 'category',\n" +
+		indent + "  label: " + string(safeLabel) + ",\n" +
+		indent + "  link: { type: 'doc', id: " + string(safeID) + " },\n" +
+		indent + "  items: [],\n" +
+		indent + "},\n"
+
+	// Build via append rather than make([]byte, 0, len(existing)+len(block)):
 	// the explicit capacity computation tripped a CodeQL overflow heuristic
 	// even though the input is bounded by maxSidebarBytes above.
 	out := append([]byte(nil), existing[:endLineStart]...)
-	out = append(out, []byte(line)...)
+	out = append(out, []byte(block)...)
 	out = append(out, existing[endLineStart:]...)
 	return out, nil
 }
@@ -118,7 +134,7 @@ func findEndregion(src []byte, section string) (int, string, error) {
 
 var (
 	plainEntryRe = regexp.MustCompile(`(?m)^[ \t]*'([^']+)',?\s*$`)
-	categoryIDRe = regexp.MustCompile(`id:\s*'([^']+)'`)
+	categoryIDRe = regexp.MustCompile(`id:\s*['"]([^'"]+)['"]`)
 )
 
 // regionContainsID reports whether the given region bytes already

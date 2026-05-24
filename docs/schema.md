@@ -2,7 +2,7 @@
 
 Generated from `schema/team.schema.json` — do not edit by hand.
 
-Run `make schema-docs` to regenerate.
+Run `go run ./internal/schemadoc schema/team.schema.json docs/schema.md` to regenerate.
 
 ## `datadog_team_memberships`
 
@@ -58,7 +58,7 @@ GitHub child team memberships. The four standard teams (sandbox-approvers, non-p
 
 GitHub parent team memberships. All team members should be listed here. Use GitHub usernames (NOT email addresses).
 
-- **type:** `any`
+- **type:** `object`
 - **required:** true
 
 ## `github_repositories`
@@ -79,14 +79,14 @@ Google Cloud Identity basic groups: admin, reader, writer.
 
 pt-corpus only. Per-environment console browse access for pt-corpus service accounts.
 
-- **type:** `any`
+- **type:** `object`
 - **required:** false
 
 ## `google_project_creator_groups_memberships`
 
-pt-corpus only. Per-environment project creator access for pt-corpus service accounts.
+pt-corpus only. Per-environment console browse access for pt-corpus service accounts.
 
-- **type:** `any`
+- **type:** `object`
 - **required:** false
 
 ## `google_project_enable_datadog`
@@ -105,9 +105,9 @@ Additional GCP API services to enable in the team project.
 
 ## `google_xpn_admin_groups_memberships`
 
-pt-corpus only. Per-environment shared VPC (XPN) admin access for pt-corpus service accounts.
+pt-corpus only. Per-environment console browse access for pt-corpus service accounts.
 
-- **type:** `any`
+- **type:** `object`
 - **required:** false
 
 ## `platform_managed_project`
@@ -132,4 +132,3 @@ Team Topologies type. Must match the team_key prefix.
 - **type:** `string`
 - **required:** true
 - **enum:** `platform-team`, `stream-aligned-team`, `complicated-subsystem-team`, `enabling-team`
-
