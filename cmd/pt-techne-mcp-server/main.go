@@ -10,6 +10,7 @@
 //   - get_team                — parsed spec + docs_pages for one team (requires GITHUB_TOKEN)
 //   - lookup_user             — every team and role a user appears in (requires GITHUB_TOKEN)
 //   - find_repo               — which team owns a github repository (requires GITHUB_TOKEN)
+//   - next_available_cidrs    — compute next N unallocated GKE subnet CIDR slots (requires GITHUB_TOKEN)
 //   - render_corpus_helpers   — insert a team's main-production workspace into
 //     osinfra-io/pt-corpus/helpers.tofu (requires GITHUB_TOKEN)
 //   - render_pneuma_helpers   — same for osinfra-io/pt-pneuma/helpers.tofu (requires GITHUB_TOKEN)
@@ -62,6 +63,7 @@ func main() {
 	tools.GetTeam(server, v, ghClient)
 	tools.LookupUser(server, v, ghClient)
 	tools.FindRepo(server, v, ghClient)
+	tools.NextAvailableCidrs(server, v, ghClient)
 	tools.RenderCorpusHelpers(server, ghClient)
 	tools.RenderPneumaHelpers(server, ghClient)
 	tools.RenderTeamDocsIndex(server, v)

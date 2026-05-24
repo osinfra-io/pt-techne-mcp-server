@@ -35,6 +35,7 @@ func newReadHarness(t *testing.T, c gh.Client) *readToolHarness {
 	tools.GetTeam(server, v, c)
 	tools.LookupUser(server, v, c)
 	tools.FindRepo(server, v, c)
+	tools.NextAvailableCidrs(server, v, c)
 
 	ct, st := mcp.NewInMemoryTransports()
 	ctx := context.Background()
@@ -125,6 +126,7 @@ func TestReadTools_NotConfigured(t *testing.T) {
 		{"get_team", map[string]any{"team_key": "pt-arche"}},
 		{"lookup_user", map[string]any{"github_username": "brettcurtis"}},
 		{"find_repo", map[string]any{"name": "pt-arche-core-helpers"}},
+		{"next_available_cidrs", map[string]any{"count": 1}},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			res := h.call(c.name, c.args)
