@@ -37,6 +37,7 @@ type fakeClient struct {
 
 	// call counters
 	created, deleted, updated, committed, prsCreated int
+	labelsAdded                                      []string // labels applied across all AddLabels calls
 }
 
 func newFake() *fakeClient {
@@ -235,6 +236,16 @@ func (f *fakeClient) CreatePRInRepo(_ context.Context, repo, _, _, _, _ string) 
 	pr := gh.PullRequest{Number: 100, URL: "https://github.com/osinfra-io/" + repo + "/pull/100"}
 	f.repoOpenPRs[repo] = []gh.PullRequest{pr}
 	return pr, nil
+}
+
+func (f *fakeClient) AddLabels(_ context.Context, _ int, labels []string) error {
+	f.labelsAdded = append(f.labelsAdded, labels...)
+	return nil
+}
+
+func (f *fakeClient) AddLabelsInRepo(_ context.Context, _ string, _ int, labels []string) error {
+	f.labelsAdded = append(f.labelsAdded, labels...)
+	return nil
 }
 
 func fakeConflict() error {
@@ -512,4 +523,92 @@ func renderFor(t *testing.T, in map[string]any) []byte {
 		t.Fatal(err)
 	}
 	return out
+}
+
+func TestOpenPR_CustomBranch(t *testing.T) {
+	f := newFake()
+	f.compareRes = gh.StatusIdentical
+	res := runOpenPR(t, f, map[string]any{
+		"spec":   validSpec(),
+		"branch": "onboard/pt-example",
+	})
+	if res.IsError {
+		t.Fatalf("unexpected error: %+v", res)
+	}
+	out := decodeOutput(t, res)
+	if out.Branch != "onboard/pt-example" {
+		t.Fatalf("expected branch=onboard/pt-example, got %q", out.Branch)
+	}
+	if out.Action != "created" {
+		t.Fatalf("expected action=created, got %q", out.Action)
+	}
+	// Verify the branch was created with the custom name
+	if _, ok := f.refs["onboard/pt-example"]; !ok {
+		t.Fatal("expected ref onboard/pt-example to be created")
+	}
+}
+
+func TestOpenPR_RejectMainBranch(t *testing.T) {
+	f := newFake()
+	res := runOpenPR(t, f, map[string]any{
+		"spec":   validSpec(),
+		"branch": "main",
+	})
+	e := decodeOpError(t, res)
+	if e["code"] != "invalid_input" {
+		t.Fatalf("expected code=invalid_input, got %v", e["code"])
+	}
+	if f.created+f.committed+f.prsCreated > 0 {
+		t.Fatal("rejected branch must not trigger GitHub calls")
+	}
+}
+
+func TestOpenPR_LabelsAppliedOnCreate(t *testing.T) {
+	f := newFake()
+	f.compareRes = gh.StatusIdentical
+	res := runOpenPR(t, f, map[string]any{
+		"spec":   validSpec(),
+		"labels": []string{"nomos"},
+	})
+	if res.IsError {
+		t.Fatalf("unexpected error: %+v", res)
+	}
+	if len(f.labelsAdded) != 1 || f.labelsAdded[0] != "nomos" {
+		t.Fatalf("expected labels=[nomos], got %v", f.labelsAdded)
+	}
+}
+
+func TestOpenPR_LabelsAppliedOnNoop(t *testing.T) {
+	f := newFake()
+	rendered := renderFor(t, validSpec())
+	f.refs["team/pt-example"] = "branch-sha"
+	f.files["teams/pt-example.tfvars@team/pt-example"] = string(rendered)
+	f.compareRes = gh.StatusAhead
+	f.openPRs = []gh.PullRequest{{Number: 7, URL: "url-7"}}
+	res := runOpenPR(t, f, map[string]any{
+		"spec":   validSpec(),
+		"labels": []string{"nomos", "onboarding"},
+	})
+	if res.IsError {
+		t.Fatalf("unexpected error: %+v", res)
+	}
+	out := decodeOutput(t, res)
+	if out.Action != "noop" {
+		t.Fatalf("expected noop, got %q", out.Action)
+	}
+	if len(f.labelsAdded) != 2 {
+		t.Fatalf("expected 2 labels on noop, got %v", f.labelsAdded)
+	}
+}
+
+func TestOpenPR_NoLabelsWhenEmpty(t *testing.T) {
+	f := newFake()
+	f.compareRes = gh.StatusIdentical
+	res := runOpenPR(t, f, map[string]any{"spec": validSpec()})
+	if res.IsError {
+		t.Fatalf("unexpected error: %+v", res)
+	}
+	if len(f.labelsAdded) != 0 {
+		t.Fatalf("expected no labels when not specified, got %v", f.labelsAdded)
+	}
 }
