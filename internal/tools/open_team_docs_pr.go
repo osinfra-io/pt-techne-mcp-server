@@ -129,6 +129,7 @@ func openTeamDocsPR(ctx context.Context, c gh.Client, team *spec.Team, indexRes 
 	if err != nil {
 		return nil, apiError(err)
 	}
+	branchHadSidebars := sidebarsExists
 	if !sidebarsExists {
 		// Branch doesn't have sidebars.js yet — fall back to main.
 		currentSidebars, sidebarsBlobSHA, sidebarsExists, err = c.GetFileInRepo(ctx, repo, sidebarsPath, gh.Base)
@@ -166,7 +167,9 @@ func openTeamDocsPR(ctx context.Context, c gh.Client, team *spec.Team, indexRes 
 	}
 
 	indexUpToDate := bytes.Equal(currentIndex, indexRes.Content)
-	sidebarsUpToDate := bytes.Equal(currentSidebars, patchedSidebars)
+	// If the branch didn't have sidebars.js, the file always needs committing
+	// even when the patched content equals main (the branch lacks it).
+	sidebarsUpToDate := branchHadSidebars && bytes.Equal(currentSidebars, patchedSidebars)
 
 	if indexUpToDate && sidebarsUpToDate && openPR != nil {
 		return &OpenTeamDocsPROutput{
