@@ -104,10 +104,9 @@ go test -race ./...                             # run tests
 golangci-lint run                               # lint (uses .golangci.yml)
 ```
 
-Schema maintenance (run after editing `schema/team.schema.json`):
+Schema maintenance (run after editing `internal/spec/schema_embed.json`):
 
 ```sh
-cp schema/team.schema.json internal/spec/schema_embed.json   # sync embedded copy
 go run ./internal/schemadoc schema/team.schema.json docs/schema.md  # regenerate docs
 ```
 
@@ -118,7 +117,7 @@ go run ./internal/schemadoc schema/team.schema.json docs/schema.md  # regenerate
 | [`docs/contributing.md`](docs/contributing.md) | Repo layout, architecture, how to add a tool |
 | [`docs/configuration.md`](docs/configuration.md) | Token setup, operational error codes, tool semantics |
 | [`docs/schema.md`](docs/schema.md) | Generated reference for every team spec field |
-| [`schema/team.schema.json`](schema/team.schema.json) | Single source of truth for the team spec |
+| [`schema/team.schema.json`](schema/team.schema.json) | Team spec schema (symlink to `internal/spec/schema_embed.json`) |
 
 ## License
 

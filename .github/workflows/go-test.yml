@@ -21,10 +21,6 @@ jobs:
         with:
           go-version: 1.26.3
 
-      - name: Verify embedded schema is in sync with canonical schema
-        run: |
-          diff -u schema/team.schema.json internal/spec/schema_embed.json
-
       - name: Lint
         uses: golangci/golangci-lint-action@db582008a42febd596419635a5abc9d9815daa9c  # v9.2.1
         with:

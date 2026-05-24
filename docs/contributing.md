@@ -52,10 +52,9 @@ graph TD
     GitHub --> Fake
 ```
 
-The schema is duplicated into `internal/spec/schema_embed.json` because
-`//go:embed` cannot traverse parent directories. CI fails when the two
-diverge; `cp schema/team.schema.json internal/spec/schema_embed.json` updates
-the copy.
+The schema lives in `internal/spec/schema_embed.json` (the canonical copy used
+via `//go:embed`). The `schema/team.schema.json` path is a symlink for
+repo-level discoverability.
 
 ## Read tools vs write tools
 
