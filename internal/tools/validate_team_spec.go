@@ -32,6 +32,10 @@ func Validate(s *mcp.Server, v *spec.Validator) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "validate_team_spec",
 		Description: "Validate a team spec object against schema/team.schema.json. Returns {valid, errors[]} with structured per-field errors. Never throws.",
+		Annotations: &mcp.ToolAnnotations{
+			Title:        "Validate team spec",
+			ReadOnlyHint: true,
+		},
 	}, func(_ context.Context, _ *mcp.CallToolRequest, in ValidateInput) (*mcp.CallToolResult, *ValidateOutput, error) {
 		specMap, err := coerceSpec(in.Spec)
 		if err != nil {

@@ -4,7 +4,7 @@
 // type, required flag, description, and constraints (pattern/enum). Nested
 // objects are not expanded. Run via:
 //
-//	make schema-docs
+//	go run ./internal/schemadoc schema/team.schema.json docs/schema.md
 package main
 
 import (
@@ -45,7 +45,7 @@ func main() {
 	var b strings.Builder
 	b.WriteString("# Team spec schema\n\n")
 	b.WriteString("Generated from `schema/team.schema.json` — do not edit by hand.\n\n")
-	b.WriteString("Run `make schema-docs` to regenerate.\n\n")
+	b.WriteString("Run `go run ./internal/schemadoc schema/team.schema.json docs/schema.md` to regenerate.\n\n")
 
 	teamDef, err := resolveTeamDef(&root)
 	if err != nil {
@@ -61,10 +61,12 @@ func main() {
 		if field == nil {
 			die(fmt.Errorf("render field %q: schema is null", k))
 		}
-		writeField(&b, k, field, required[k], 2)
+		writeField(&b, k, field, required[k], 2, root.Defs)
 	}
 
-	if err := os.WriteFile(os.Args[2], []byte(b.String()), 0o644); err != nil {
+	out := strings.TrimRight(b.String(), "\n") + "\n"
+
+	if err := os.WriteFile(os.Args[2], []byte(out), 0o600); err != nil {
 		die(fmt.Errorf("write markdown %q: %w", os.Args[2], err))
 	}
 }
@@ -94,7 +96,21 @@ func resolveTeamDef(root *schema) (*schema, error) {
 	return root, nil
 }
 
-func writeField(b *strings.Builder, name string, s *schema, required bool, depth int) {
+func writeField(b *strings.Builder, name string, s *schema, required bool, depth int, defs map[string]*schema) {
+	// Resolve $ref before rendering. Deep-copy the resolved schema to
+	// avoid mutating the shared definition.
+	if s.Ref != "" && defs != nil {
+		refName := strings.TrimPrefix(s.Ref, "#/$defs/")
+		if resolved, ok := defs[refName]; ok {
+			cp := *resolved
+			// Preserve the parent description if the $ref target lacks one.
+			if s.Description != "" && cp.Description == "" {
+				cp.Description = s.Description
+			}
+			s = &cp
+		}
+	}
+
 	prefix := strings.Repeat("#", depth)
 	fmt.Fprintf(b, "%s `%s`\n\n", prefix, name)
 	if s.Description != "" {

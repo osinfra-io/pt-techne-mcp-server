@@ -90,6 +90,7 @@
     "google_project_services": {
       "description": "Additional GCP API services to enable in the team project.",
       "type": "array",
+      "uniqueItems": true,
       "items": { "type": "string", "pattern": "^[a-z0-9-]+\\.googleapis\\.com$" }
     },
     "google_xpn_admin_groups_memberships": {
@@ -214,6 +215,7 @@
           "description": "Repository topics for GitHub categorization and discovery. The first two entries must always be the team key (e.g. \"pt-logos\") and the team type (e.g. \"platform-team\"). Additional technology topics follow (e.g. \"opentofu\", \"kubernetes\").",
           "type": "array",
           "minItems": 2,
+          "uniqueItems": true,
           "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }
         }
       }
@@ -240,6 +242,7 @@
           "properties": {
             "teams": {
               "type": "array",
+              "uniqueItems": true,
               "items": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9-]*$" }
             }
           }

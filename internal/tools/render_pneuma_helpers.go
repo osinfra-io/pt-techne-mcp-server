@@ -30,6 +30,10 @@ func RenderPneumaHelpers(s *mcp.Server, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "render_pneuma_helpers",
 		Description: "Fetch helpers.tofu from osinfra-io/pt-pneuma@main and return canonical bytes with '<team_key>-main-production' inserted into logos_workspaces. Idempotent: returns the input bytes unchanged when the workspace is already present. Requires GITHUB_TOKEN.",
+		Annotations: &mcp.ToolAnnotations{
+			Title:        "Render pneuma helpers",
+			ReadOnlyHint: true,
+		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in RenderPneumaHelpersInput) (*mcp.CallToolResult, *RenderPneumaHelpersOutput, error) {
 		return renderHelpersTool(ctx, c, "render_pneuma_helpers", "pt-pneuma", in.TeamKey, func(b []byte) *RenderPneumaHelpersOutput {
 			return &RenderPneumaHelpersOutput{HelpersTofu: string(b)}

@@ -29,13 +29,20 @@ func Render(s *mcp.Server, v *spec.Validator) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "render_team_tfvars",
 		Description: "Validate then render a team spec to canonical pt-logos tfvars bytes. Returns {tfvars}. On validation failure, returns an isError tool result whose structured content matches validate_team_spec.",
+		Annotations: &mcp.ToolAnnotations{
+			Title:        "Render team tfvars",
+			ReadOnlyHint: true,
+		},
 	}, func(_ context.Context, _ *mcp.CallToolRequest, in RenderInput) (*mcp.CallToolResult, *RenderOutput, error) {
 		specMap, err := coerceSpec(in.Spec)
 		if err != nil {
 			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
 		}
 		if errs := v.Validate(specMap); len(errs) > 0 {
-			body, _ := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
+			body, merr := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
+			if merr != nil {
+				return nil, nil, fmt.Errorf("marshal validation errors: %w", merr)
+			}
 			return &mcp.CallToolResult{
 				IsError: true,
 				Content: []mcp.Content{&mcp.TextContent{Text: string(body)}},

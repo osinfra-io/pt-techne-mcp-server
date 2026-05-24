@@ -23,6 +23,7 @@ RUN CGO_ENABLED=0 GOFLAGS=-trimpath go build \
       ./cmd/pt-techne-mcp-server
 
 FROM scratch
+WORKDIR /
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /out/pt-techne-mcp-server /pt-techne-mcp-server
 USER 1000:1000

@@ -3,6 +3,7 @@ package tools
 
 import (
 	"context"
+	"fmt"
 	"sort"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -32,6 +33,10 @@ func FindRepo(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "find_repo",
 		Description: "Find which team(s) own a github repository. Walks every team's github_repositories block in osinfra-io/pt-logos@main and returns matches by exact repository name (case-sensitive, matching GitHub). Requires GITHUB_TOKEN.",
+		Annotations: &mcp.ToolAnnotations{
+			Title:        "Find repository owner",
+			ReadOnlyHint: true,
+		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in FindRepoInput) (*mcp.CallToolResult, *FindRepoOutput, error) {
 		if c == nil {
 			return notConfigured("find_repo"), nil, nil
@@ -59,7 +64,7 @@ func FindRepo(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			}
 			obj, err := asJSON(repo)
 			if err != nil {
-				return nil, nil, err
+				return errResult(opError{Code: "marshal_failed", Message: fmt.Sprintf("marshal repository %q: %s", in.Name, err)}), nil, nil
 			}
 			out.Matches = append(out.Matches, FindRepoMatch{TeamKey: t.TeamKey, Repository: obj})
 		}

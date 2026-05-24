@@ -81,18 +81,29 @@ func (v *Validator) ValidateJSON(data []byte) ([]ValidationError, error) {
 }
 
 // errorsAs is a thin wrapper to avoid importing errors at top — keeps imports tight.
+// Supports both single Unwrap() error and multi Unwrap() []error chains.
 func errorsAs(err error, target **jsonschema.ValidationError) bool {
 	for e := err; e != nil; {
 		if v, ok := e.(*jsonschema.ValidationError); ok {
 			*target = v
 			return true
 		}
+		// Try single-error unwrap first.
 		type unwrapper interface{ Unwrap() error }
-		u, ok := e.(unwrapper)
-		if !ok {
-			return false
+		if u, ok := e.(unwrapper); ok {
+			e = u.Unwrap()
+			continue
 		}
-		e = u.Unwrap()
+		// Try multi-error unwrap (Go 1.20+).
+		type multiUnwrapper interface{ Unwrap() []error }
+		if mu, ok := e.(multiUnwrapper); ok {
+			for _, inner := range mu.Unwrap() {
+				if errorsAs(inner, target) {
+					return true
+				}
+			}
+		}
+		return false
 	}
 	return false
 }

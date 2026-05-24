@@ -49,6 +49,10 @@ func OpenTeamDocsPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "open_team_docs_pr",
 		Description: "Validate, render index.md, patch sidebars.js, and open-or-update a PR on osinfra-io/pt-ekklesia-docs for the given team spec. Idempotent. Requires GITHUB_TOKEN with write access to pt-ekklesia-docs.",
+		Annotations: &mcp.ToolAnnotations{
+			Title:        "Open team docs PR",
+			ReadOnlyHint: false,
+		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in OpenTeamDocsPRInput) (*mcp.CallToolResult, *OpenTeamDocsPROutput, error) {
 		if c == nil {
 			return notConfigured("open_team_docs_pr"), nil, nil
@@ -58,7 +62,10 @@ func OpenTeamDocsPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
 		}
 		if errs := v.Validate(specMap); len(errs) > 0 {
-			body, _ := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
+			body, merr := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
+			if merr != nil {
+				return nil, nil, fmt.Errorf("marshal validation errors: %w", merr)
+			}
 			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: string(body)}}}, nil, nil
 		}
 
@@ -75,8 +82,14 @@ func OpenTeamDocsPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 		if err != nil {
 			return errResult(opError{Code: "docs_input_invalid", Message: err.Error()}), nil, nil
 		}
-		section, _ := docs.SectionFor(team.TeamType)
-		folder, _ := docs.TeamFolder(team.TeamKey)
+		section, err := docs.SectionFor(team.TeamType)
+		if err != nil {
+			return errResult(opError{Code: "docs_input_invalid", Message: err.Error()}), nil, nil
+		}
+		folder, err := docs.TeamFolder(team.TeamKey)
+		if err != nil {
+			return errResult(opError{Code: "docs_input_invalid", Message: err.Error()}), nil, nil
+		}
 
 		branch := "team-docs/" + team.TeamKey
 		title := in.Message
@@ -116,12 +129,18 @@ func openTeamDocsPR(ctx context.Context, c gh.Client, team *spec.Team, indexRes 
 	if err != nil {
 		return nil, apiError(err)
 	}
+	branchHadSidebars := sidebarsExists
 	if !sidebarsExists {
-		// Brand-new repo state — should never happen against real
-		// pt-ekklesia-docs, but keep the error structured.
-		return nil, &opError{Code: "source_parse_error", Message: "sidebars.js not found at branch " + branch}
+		// Branch doesn't have sidebars.js yet — fall back to main.
+		currentSidebars, sidebarsBlobSHA, sidebarsExists, err = c.GetFileInRepo(ctx, repo, sidebarsPath, gh.Base)
+		if err != nil {
+			return nil, apiError(err)
+		}
+		if !sidebarsExists {
+			return nil, &opError{Code: "source_parse_error", Message: "sidebars.js not found in " + repo + "@" + gh.Base}
+		}
 	}
-	patchedSidebars, err := sidebar.Render(currentSidebars, section, folder)
+	patchedSidebars, err := sidebar.Render(currentSidebars, section, folder, team.DisplayName)
 	if err != nil {
 		var anchorsErr *sidebar.ErrAnchorsMissing
 		if errors.As(err, &anchorsErr) {
@@ -148,7 +167,9 @@ func openTeamDocsPR(ctx context.Context, c gh.Client, team *spec.Team, indexRes 
 	}
 
 	indexUpToDate := bytes.Equal(currentIndex, indexRes.Content)
-	sidebarsUpToDate := bytes.Equal(currentSidebars, patchedSidebars)
+	// If the branch didn't have sidebars.js, the file always needs committing
+	// even when the patched content equals main (the branch lacks it).
+	sidebarsUpToDate := branchHadSidebars && bytes.Equal(currentSidebars, patchedSidebars)
 
 	if indexUpToDate && sidebarsUpToDate && openPR != nil {
 		return &OpenTeamDocsPROutput{

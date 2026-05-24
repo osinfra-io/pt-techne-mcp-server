@@ -59,10 +59,10 @@ func Render(t *spec.Team) (*Result, error) {
 	var b bytes.Buffer
 	b.WriteString("---\n")
 	b.WriteString("sidebar_label: ")
-	b.WriteString(t.DisplayName)
+	b.WriteString(sanitizeFrontmatter(t.DisplayName))
 	b.WriteString("\n")
 	b.WriteString("description: ")
-	b.WriteString(t.DisplayNameComment)
+	b.WriteString(sanitizeFrontmatter(t.DisplayNameComment))
 	b.WriteString("\n")
 	b.WriteString("---\n\n")
 	b.WriteString("# ")
@@ -99,11 +99,29 @@ func SectionFor(teamType string) (string, error) {
 // TeamFolder strips the team_type prefix (pt-/st-/ct-/et-) from team_key
 // to derive the docs folder name. Matches the existing pt-ekklesia-docs
 // layout where every team folder is the bare name (e.g. pt-logos -> logos).
+//
+// The result is validated to be a single path component (no slashes, no
+// ".." traversal) so callers can safely interpolate it into file paths.
 func TeamFolder(teamKey string) (string, error) {
 	for _, p := range []string{"pt-", "st-", "ct-", "et-"} {
 		if strings.HasPrefix(teamKey, p) {
-			return strings.TrimPrefix(teamKey, p), nil
+			folder := strings.TrimPrefix(teamKey, p)
+			if folder == "" || strings.Contains(folder, "/") || strings.Contains(folder, "..") {
+				return "", fmt.Errorf("render: team_key %q produces invalid folder name %q", teamKey, folder)
+			}
+			return folder, nil
 		}
 	}
 	return "", fmt.Errorf("render: team_key %q does not start with pt-/st-/ct-/et-", teamKey)
+}
+
+// sanitizeFrontmatter strips characters that would break YAML frontmatter
+// values (newlines, leading/trailing whitespace, the document separator).
+// Values containing a colon are left as-is since they're unquoted scalars
+// in this context and colons mid-value are fine for Docusaurus.
+func sanitizeFrontmatter(s string) string {
+	s = strings.ReplaceAll(s, "\n", " ")
+	s = strings.ReplaceAll(s, "\r", "")
+	s = strings.ReplaceAll(s, "---", "—")
+	return strings.TrimSpace(s)
 }

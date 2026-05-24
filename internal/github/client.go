@@ -207,8 +207,13 @@ func (c *goClient) listDir(ctx context.Context, repo, path, ref string) ([]strin
 	}
 	out := make([]string, 0, len(dir))
 	for _, e := range dir {
-		if e.GetType() == "file" {
+		switch e.GetType() {
+		case "file":
 			out = append(out, e.GetName())
+		case "dir", "symlink", "submodule":
+			// Skip non-file entries — callers only need file names.
+		default:
+			return nil, false, fmt.Errorf("%s/%s@%s: unexpected entry type %q for %q", repo, path, ref, e.GetType(), e.GetName())
 		}
 	}
 	sort.Strings(out)
