@@ -64,7 +64,7 @@ func main() {
 		writeField(&b, k, field, required[k], 2, root.Defs)
 	}
 
-	if err := os.WriteFile(os.Args[2], []byte(b.String()), 0o644); err != nil {
+	if err := os.WriteFile(os.Args[2], []byte(b.String()), 0o600); err != nil {
 		die(fmt.Errorf("write markdown %q: %w", os.Args[2], err))
 	}
 }

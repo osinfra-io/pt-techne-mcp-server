@@ -503,14 +503,14 @@ func nestedBlock(w *writer, header string, body func(*writer)) {
 func (w *writer) aligned(rows [][2]string) { w.alignedTop(rows) }
 
 func (w *writer) alignedTop(rows [][2]string) {
-	max := 0
+	maxLen := 0
 	for _, r := range rows {
-		if len(r[0]) > max {
-			max = len(r[0])
+		if len(r[0]) > maxLen {
+			maxLen = len(r[0])
 		}
 	}
 	for _, r := range rows {
-		pad := strings.Repeat(" ", max-len(r[0]))
+		pad := strings.Repeat(" ", maxLen-len(r[0]))
 		w.line(r[0] + pad + " = " + r[1])
 	}
 }

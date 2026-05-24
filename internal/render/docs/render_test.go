@@ -39,7 +39,7 @@ func TestRenderGoldens(t *testing.T) {
 			}
 			goldenPath := filepath.Join("testdata/golden", name[:len(name)-len(".json")]+".md")
 			if updateGoldens {
-				if err := os.WriteFile(goldenPath, res.Content, 0o644); err != nil {
+				if err := os.WriteFile(goldenPath, res.Content, 0o600); err != nil {
 					t.Fatalf("write golden: %v", err)
 				}
 				return
