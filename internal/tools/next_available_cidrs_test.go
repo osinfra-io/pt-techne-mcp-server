@@ -55,9 +55,17 @@ func TestNextAvailableCidrs_InvalidCount(t *testing.T) {
 	f := seedFakeFromGoldens(t)
 	h := newReadHarness(t, f)
 
+	// count = 0
 	res := h.call("next_available_cidrs", map[string]any{"count": 0})
 	body := decodeError(t, res)
 	if body["code"] != "invalid_input" {
 		t.Fatalf("expected invalid_input, got %+v", body)
+	}
+
+	// count too large
+	res = h.call("next_available_cidrs", map[string]any{"count": 999})
+	body = decodeError(t, res)
+	if body["code"] != "invalid_input" {
+		t.Fatalf("expected invalid_input for large count, got %+v", body)
 	}
 }

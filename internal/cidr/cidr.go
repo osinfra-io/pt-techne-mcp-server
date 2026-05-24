@@ -97,7 +97,7 @@ func CollectSubnets(teams []*spec.Team) []spec.Subnet {
 // cidrAt computes the CIDR string at a given slot index for a range.
 func cidrAt(r cidrRange, index int) string {
 	step := uint32(1) << (32 - r.prefix)
-	ip := r.baseIP + uint32(index)*step
+	ip := r.baseIP + uint32(index)*step //nolint:gosec // index is bounded by maxCount (256)
 	return fmt.Sprintf("%s/%d", uint32ToIP(ip).String(), r.prefix)
 }
 
@@ -112,7 +112,11 @@ func slotIndex(r cidrRange, cidr string) int {
 	if ones != r.prefix {
 		return -1
 	}
-	addr := ipToUint32(ip.To4())
+	v4 := ip.To4()
+	if v4 == nil {
+		return -1
+	}
+	addr := ipToUint32(v4)
 	if addr < r.baseIP {
 		return -1
 	}
@@ -130,5 +134,5 @@ func ipToUint32(ip net.IP) uint32 {
 }
 
 func uint32ToIP(n uint32) net.IP {
-	return net.IPv4(byte(n>>24), byte(n>>16), byte(n>>8), byte(n))
+	return net.IPv4(byte(n>>24), byte(n>>16), byte(n>>8), byte(n)) //nolint:gosec // deliberate truncation to extract octets
 }

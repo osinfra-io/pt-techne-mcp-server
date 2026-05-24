@@ -36,11 +36,12 @@ func NextAvailableCidrs(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			ReadOnlyHint: true,
 		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in NextAvailableCidrsInput) (*mcp.CallToolResult, any, error) {
+		const maxCount = 256
 		if c == nil {
 			return notConfigured("next_available_cidrs"), nil, nil
 		}
-		if in.Count < 1 {
-			return errResult(opError{Code: "invalid_input", Message: "count must be at least 1"}), nil, nil
+		if in.Count < 1 || in.Count > maxCount {
+			return errResult(opError{Code: "invalid_input", Message: "count must be between 1 and 256"}), nil, nil
 		}
 		ref, oe := resolveBaseRef(ctx, c)
 		if oe != nil {
