@@ -84,7 +84,7 @@ pt-corpus only. Per-environment console browse access for pt-corpus service acco
 
 ## `google_project_creator_groups_memberships`
 
-pt-corpus only. Per-environment console browse access for pt-corpus service accounts.
+pt-corpus only. Per-environment project creator access for pt-corpus service accounts.
 
 - **type:** `object`
 - **required:** false
@@ -105,7 +105,7 @@ Additional GCP API services to enable in the team project.
 
 ## `google_xpn_admin_groups_memberships`
 
-pt-corpus only. Per-environment console browse access for pt-corpus service accounts.
+pt-corpus only. Per-environment shared VPC (XPN) admin access for pt-corpus service accounts.
 
 - **type:** `object`
 - **required:** false
