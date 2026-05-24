@@ -64,7 +64,7 @@ func LookupUser(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			Title:        "Look up user",
 			ReadOnlyHint: true,
 		},
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, in LookupUserInput) (*mcp.CallToolResult, *LookupUserOutput, error) {
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, in LookupUserInput) (*mcp.CallToolResult, any, error) {
 		if c == nil {
 			return notConfigured("lookup_user"), nil, nil
 		}

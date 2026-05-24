@@ -53,7 +53,12 @@ func OpenTeamDocsPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			Title:        "Open team docs PR",
 			ReadOnlyHint: false,
 		},
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, in OpenTeamDocsPRInput) (*mcp.CallToolResult, *OpenTeamDocsPROutput, error) {
+		// Out is intentionally typed as `any` (not *OpenTeamDocsPROutput) so the
+		// MCP go-sdk does not substitute a zero-value struct into
+		// StructuredContent on error paths (server.go:362-369), which would
+		// otherwise shadow our errResult body for clients that read structured
+		// content. See issue #21.
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, in OpenTeamDocsPRInput) (*mcp.CallToolResult, any, error) {
 		if c == nil {
 			return notConfigured("open_team_docs_pr"), nil, nil
 		}

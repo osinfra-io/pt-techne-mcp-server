@@ -37,7 +37,7 @@ func FindRepo(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			Title:        "Find repository owner",
 			ReadOnlyHint: true,
 		},
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, in FindRepoInput) (*mcp.CallToolResult, *FindRepoOutput, error) {
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, in FindRepoInput) (*mcp.CallToolResult, any, error) {
 		if c == nil {
 			return notConfigured("find_repo"), nil, nil
 		}
