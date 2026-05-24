@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -24,8 +25,10 @@ import (
 
 // OpenTeamDocsPRInput is the input for open_team_docs_pr.
 type OpenTeamDocsPRInput struct {
-	Spec    any    `json:"spec" jsonschema:"the validated team spec to commit and PR"`
-	Message string `json:"message,omitempty" jsonschema:"optional commit/PR title override; defaults to 'Add docs for <team-key>'"`
+	Spec    any      `json:"spec" jsonschema:"the validated team spec to commit and PR"`
+	Message string   `json:"message,omitempty" jsonschema:"optional commit/PR title override; defaults to 'Add docs for <team-key>'"`
+	Branch  string   `json:"branch,omitempty" jsonschema:"optional branch name override; defaults to 'team-docs/<team-key>'"`
+	Labels  []string `json:"labels,omitempty" jsonschema:"optional labels to apply to the PR"`
 }
 
 // OpenTeamDocsPROutput mirrors OpenTeamPROutput. CommitSHAs holds the
@@ -96,7 +99,13 @@ func OpenTeamDocsPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			return errResult(opError{Code: "docs_input_invalid", Message: err.Error()}), nil, nil
 		}
 
-		branch := "team-docs/" + team.TeamKey
+		branch := strings.TrimSpace(in.Branch)
+		if branch == "" {
+			branch = "team-docs/" + team.TeamKey
+		}
+		if branch == gh.Base {
+			return errResult(opError{Code: "invalid_input", Message: "branch must not be the base branch (\"" + gh.Base + "\")"}), nil, nil
+		}
 		title := in.Message
 		if title == "" {
 			title = "Add docs for " + team.TeamKey
@@ -106,6 +115,9 @@ func OpenTeamDocsPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 		out, opErr := openTeamDocsPR(ctx, c, &team, indexRes, section, folder, branch, title, message)
 		if opErr != nil {
 			return errResult(*opErr), nil, nil
+		}
+		if len(in.Labels) > 0 && out.PRNumber > 0 {
+			_ = c.AddLabelsInRepo(ctx, gh.RepoEkklesiaDocs, out.PRNumber, in.Labels)
 		}
 		return nil, out, nil
 	})

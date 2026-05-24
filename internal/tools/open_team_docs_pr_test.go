@@ -175,3 +175,53 @@ const sidebars = {
 export default sidebars;
 `
 }
+
+func TestOpenDocsPR_CustomBranch(t *testing.T) {
+	f := docsFakeWithSidebars()
+	// Also seed the custom branch in repoRefs so ensureBranch succeeds.
+	f.repoRefs[gh.RepoEkklesiaDocs+"/onboard/pt-example-docs"] = "main-sha"
+	f.repoFiles[gh.RepoEkklesiaDocs+"/sidebars.js@onboard/pt-example-docs"] = sidebarsFixture
+	res := runOpenDocsPR(t, f, map[string]any{
+		"spec":   validSpec(),
+		"branch": "onboard/pt-example-docs",
+	})
+	if res.IsError {
+		t.Fatalf("unexpected error: %+v", res)
+	}
+	var out tools.OpenTeamDocsPROutput
+	if err := json.Unmarshal(structuredOrText(t, res), &out); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if out.Branch != "onboard/pt-example-docs" {
+		t.Fatalf("expected branch=onboard/pt-example-docs, got %q", out.Branch)
+	}
+}
+
+func TestOpenDocsPR_LabelsApplied(t *testing.T) {
+	f := docsFakeWithSidebars()
+	res := runOpenDocsPR(t, f, map[string]any{
+		"spec":   validSpec(),
+		"labels": []string{"nomos"},
+	})
+	if res.IsError {
+		t.Fatalf("unexpected error: %+v", res)
+	}
+	if len(f.labelsAdded) != 1 || f.labelsAdded[0] != "nomos" {
+		t.Fatalf("expected labels=[nomos], got %v", f.labelsAdded)
+	}
+}
+
+func TestOpenDocsPR_RejectMainBranch(t *testing.T) {
+	f := docsFakeWithSidebars()
+	res := runOpenDocsPR(t, f, map[string]any{
+		"spec":   validSpec(),
+		"branch": "main",
+	})
+	e := decodeOpError(t, res)
+	if e["code"] != "invalid_input" {
+		t.Fatalf("expected code=invalid_input, got %v", e["code"])
+	}
+	if f.created+f.committed+f.prsCreated > 0 {
+		t.Fatal("rejected branch must not trigger GitHub calls")
+	}
+}

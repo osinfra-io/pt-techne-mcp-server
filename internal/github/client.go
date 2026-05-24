@@ -84,6 +84,8 @@ type Client interface {
 	CreateOrUpdateFile(ctx context.Context, path, branch, blobSHA string, content []byte, message string) (commitSHA string, err error)
 	ListOpenPRs(ctx context.Context, head, base string) ([]PullRequest, error)
 	CreatePR(ctx context.Context, head, base, title, body string) (PullRequest, error)
+	AddLabels(ctx context.Context, prNumber int, labels []string) error
+	AddLabelsInRepo(ctx context.Context, repo string, prNumber int, labels []string) error
 }
 
 // New returns a Client backed by go-github authenticated with the given
@@ -376,4 +378,20 @@ func IsConflict(err error) bool {
 	}
 	return er.Response.StatusCode == http.StatusConflict ||
 		er.Response.StatusCode == http.StatusUnprocessableEntity
+}
+
+func (c *goClient) AddLabels(ctx context.Context, prNumber int, labels []string) error {
+	_, _, err := c.api.Issues.AddLabelsToIssue(ctx, Owner, Repo, prNumber, labels)
+	if err != nil {
+		return fmt.Errorf("add labels to issue #%d in %s: %w", prNumber, Repo, err)
+	}
+	return nil
+}
+
+func (c *goClient) AddLabelsInRepo(ctx context.Context, repo string, prNumber int, labels []string) error {
+	_, _, err := c.api.Issues.AddLabelsToIssue(ctx, Owner, repo, prNumber, labels)
+	if err != nil {
+		return fmt.Errorf("add labels to issue #%d in %s: %w", prNumber, repo, err)
+	}
+	return nil
 }

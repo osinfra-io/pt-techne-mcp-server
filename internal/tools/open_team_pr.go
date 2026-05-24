@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -21,8 +22,10 @@ import (
 
 // OpenTeamPRInput is the input for open_team_pr.
 type OpenTeamPRInput struct {
-	Spec    any    `json:"spec" jsonschema:"the validated team spec to commit and PR"`
-	Message string `json:"message,omitempty" jsonschema:"optional commit/PR title override; defaults to 'Update teams/<team-key>.tfvars'"`
+	Spec    any      `json:"spec" jsonschema:"the validated team spec to commit and PR"`
+	Message string   `json:"message,omitempty" jsonschema:"optional commit/PR title override; defaults to 'Update teams/<team-key>.tfvars'"`
+	Branch  string   `json:"branch,omitempty" jsonschema:"optional branch name override; defaults to 'team/<team-key>'"`
+	Labels  []string `json:"labels,omitempty" jsonschema:"optional labels to apply to the PR"`
 }
 
 // OpenTeamPROutput is the structured result of open_team_pr.
@@ -91,7 +94,13 @@ func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			return nil, nil, fmt.Errorf("render team: %w", err)
 		}
 
-		branch := "team/" + team.TeamKey
+		branch := strings.TrimSpace(in.Branch)
+		if branch == "" {
+			branch = "team/" + team.TeamKey
+		}
+		if branch == gh.Base {
+			return errResult(opError{Code: "invalid_input", Message: "branch must not be the base branch (\"" + gh.Base + "\")"}), nil, nil
+		}
 		path := "teams/" + team.TeamKey + ".tfvars"
 		message := in.Message
 		if message == "" {
@@ -102,6 +111,9 @@ func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 		out, opErr := openTeamPR(ctx, c, &team, rendered, branch, path, message)
 		if opErr != nil {
 			return errResult(*opErr), nil, nil
+		}
+		if len(in.Labels) > 0 && out.PRNumber > 0 {
+			_ = c.AddLabels(ctx, out.PRNumber, in.Labels)
 		}
 		return nil, out, nil
 	})
