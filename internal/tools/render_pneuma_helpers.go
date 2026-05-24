@@ -34,8 +34,8 @@ func RenderPneumaHelpers(s *mcp.Server, c gh.Client) {
 			Title:        "Render pneuma helpers",
 			ReadOnlyHint: true,
 		},
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, in RenderPneumaHelpersInput) (*mcp.CallToolResult, *RenderPneumaHelpersOutput, error) {
-		return renderHelpersTool(ctx, c, "render_pneuma_helpers", "pt-pneuma", in.TeamKey, func(b []byte) *RenderPneumaHelpersOutput {
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, in RenderPneumaHelpersInput) (*mcp.CallToolResult, any, error) {
+		return renderHelpersTool(ctx, c, "render_pneuma_helpers", "pt-pneuma", in.TeamKey, func(b []byte) any {
 			return &RenderPneumaHelpersOutput{HelpersTofu: string(b)}
 		})
 	})

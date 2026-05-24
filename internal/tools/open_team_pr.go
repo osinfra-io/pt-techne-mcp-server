@@ -55,7 +55,8 @@ func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			Title:        "Open team PR",
 			ReadOnlyHint: false,
 		},
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, in OpenTeamPRInput) (*mcp.CallToolResult, *OpenTeamPROutput, error) {
+		// See open_team_docs_pr.go for why Out is `any` instead of *OpenTeamPROutput.
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, in OpenTeamPRInput) (*mcp.CallToolResult, any, error) {
 		if c == nil {
 			return errResult(opError{
 				Code:    "not_configured",

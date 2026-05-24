@@ -46,7 +46,7 @@ func ListTeams(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			Title:        "List teams",
 			ReadOnlyHint: true,
 		},
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, _ ListTeamsInput) (*mcp.CallToolResult, *ListTeamsOutput, error) {
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, _ ListTeamsInput) (*mcp.CallToolResult, any, error) {
 		if c == nil {
 			return notConfigured("list_teams"), nil, nil
 		}

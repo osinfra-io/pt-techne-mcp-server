@@ -35,7 +35,7 @@ func GetTeam(s *mcp.Server, v *spec.Validator, c gh.Client) {
 			Title:        "Get team",
 			ReadOnlyHint: true,
 		},
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, in GetTeamInput) (*mcp.CallToolResult, *GetTeamOutput, error) {
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, in GetTeamInput) (*mcp.CallToolResult, any, error) {
 		if c == nil {
 			return notConfigured("get_team"), nil, nil
 		}

@@ -36,18 +36,18 @@ func RenderCorpusHelpers(s *mcp.Server, c gh.Client) {
 			Title:        "Render corpus helpers",
 			ReadOnlyHint: true,
 		},
-	}, func(ctx context.Context, _ *mcp.CallToolRequest, in RenderCorpusHelpersInput) (*mcp.CallToolResult, *RenderCorpusHelpersOutput, error) {
-		return renderHelpersTool(ctx, c, "render_corpus_helpers", "pt-corpus", in.TeamKey, func(b []byte) *RenderCorpusHelpersOutput {
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, in RenderCorpusHelpersInput) (*mcp.CallToolResult, any, error) {
+		return renderHelpersTool(ctx, c, "render_corpus_helpers", "pt-corpus", in.TeamKey, func(b []byte) any {
 			return &RenderCorpusHelpersOutput{HelpersTofu: string(b)}
 		})
 	})
 }
 
 // renderHelpersTool is the shared body for render_corpus_helpers and
-// render_pneuma_helpers. Inlined into both adapters via a generic
-// callback so the typed output struct stays per-tool (the MCP SDK
-// derives schemas from the concrete struct).
-func renderHelpersTool[T any](ctx context.Context, c gh.Client, toolName, repo, teamKey string, wrap func([]byte) *T) (*mcp.CallToolResult, *T, error) {
+// render_pneuma_helpers. The wrap callback keeps each tool's concrete
+// output struct intact for clients while the handler's Out type stays
+// `any` — see open_team_docs_pr.go (issue #21) for why.
+func renderHelpersTool(ctx context.Context, c gh.Client, toolName, repo, teamKey string, wrap func([]byte) any) (*mcp.CallToolResult, any, error) {
 	if c == nil {
 		return notConfigured(toolName), nil, nil
 	}
