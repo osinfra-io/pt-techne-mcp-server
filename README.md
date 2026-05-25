@@ -87,8 +87,7 @@ cosign verify ghcr.io/osinfra-io/pt-techne-mcp-server:<tag> \
 gh release download --repo osinfra-io/pt-techne-mcp-server --pattern '*linux-amd64*'
 
 cosign verify-blob pt-techne-mcp-server-linux-amd64 \
-  --signature pt-techne-mcp-server-linux-amd64.sig \
-  --certificate pt-techne-mcp-server-linux-amd64.cert \
+  --bundle pt-techne-mcp-server-linux-amd64.bundle \
   --certificate-identity-regexp='https://github.com/osinfra-io/pt-techne-mcp-server/.github/workflows/release.yml@refs/tags/.*' \
   --certificate-oidc-issuer='https://token.actions.githubusercontent.com'
 ```
