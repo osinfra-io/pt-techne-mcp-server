@@ -69,6 +69,30 @@ go install github.com/osinfra-io/pt-techne-mcp-server/cmd/pt-techne-mcp-server@l
 }
 ```
 
+### Verification
+
+Release artifacts are signed with [cosign keyless](https://docs.sigstore.dev/cosign/signing/overview/) (Sigstore OIDC). Install [cosign](https://docs.sigstore.dev/cosign/system_config/installation/) to verify.
+
+**Container image:**
+
+```sh
+cosign verify ghcr.io/osinfra-io/pt-techne-mcp-server:<tag> \
+  --certificate-identity-regexp='https://github.com/osinfra-io/pt-techne-mcp-server/.github/workflows/release.yml@refs/tags/.*' \
+  --certificate-oidc-issuer='https://token.actions.githubusercontent.com'
+```
+
+**Binary:**
+
+```sh
+gh release download --repo osinfra-io/pt-techne-mcp-server --pattern '*linux-amd64*'
+
+cosign verify-blob pt-techne-mcp-server-linux-amd64 \
+  --signature pt-techne-mcp-server-linux-amd64.sig \
+  --certificate pt-techne-mcp-server-linux-amd64.cert \
+  --certificate-identity-regexp='https://github.com/osinfra-io/pt-techne-mcp-server/.github/workflows/release.yml@refs/tags/.*' \
+  --certificate-oidc-issuer='https://token.actions.githubusercontent.com'
+```
+
 ### Configuration
 
 Set `GITHUB_TOKEN` with access to `osinfra-io/pt-logos`, `osinfra-io/pt-corpus`, `osinfra-io/pt-pneuma`, and `osinfra-io/pt-ekklesia-docs`. Without it, GitHub-backed tools return `not_configured`; offline tools (`validate_team_spec`, `render_team_tfvars`, `render_team_docs_index`, `render_sidebar_patch`) still work.
