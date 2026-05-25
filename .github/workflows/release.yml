@@ -69,8 +69,7 @@ jobs:
         run: |
           for bin in dist/pt-techne-mcp-server-*; do
             cosign sign-blob --yes "$bin" \
-              --output-signature "${bin}.sig" \
-              --output-certificate "${bin}.cert"
+              --bundle "${bin}.bundle"
           done
 
       - name: Create release
