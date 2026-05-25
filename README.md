@@ -77,7 +77,7 @@ Release artifacts are signed with [cosign keyless](https://docs.sigstore.dev/cos
 
 ```sh
 cosign verify ghcr.io/osinfra-io/pt-techne-mcp-server:<tag> \
-  --certificate-identity-regexp='https://github.com/osinfra-io/pt-techne-mcp-server' \
+  --certificate-identity-regexp='https://github.com/osinfra-io/pt-techne-mcp-server/.github/workflows/release.yml@refs/tags/.*' \
   --certificate-oidc-issuer='https://token.actions.githubusercontent.com'
 ```
 
@@ -89,7 +89,7 @@ gh release download --repo osinfra-io/pt-techne-mcp-server --pattern '*linux-amd
 cosign verify-blob pt-techne-mcp-server-linux-amd64 \
   --signature pt-techne-mcp-server-linux-amd64.sig \
   --certificate pt-techne-mcp-server-linux-amd64.cert \
-  --certificate-identity-regexp='https://github.com/osinfra-io/pt-techne-mcp-server' \
+  --certificate-identity-regexp='https://github.com/osinfra-io/pt-techne-mcp-server/.github/workflows/release.yml@refs/tags/.*' \
   --certificate-oidc-issuer='https://token.actions.githubusercontent.com'
 ```
 
