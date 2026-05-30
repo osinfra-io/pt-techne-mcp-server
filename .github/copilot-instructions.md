@@ -4,7 +4,7 @@ This file applies to every change in this repo. Read it together with the
 platform- and techne-team instructions, both of which are loaded by Copilot
 automatically:
 
-- `pt-ai-context/.github/instructions/team.instructions.md` — platform-wide
+- `pt-ai-context/.github/instructions/platform-group.instructions.md` — platform-wide
   conventions (commits, PRs, labels, full-SHA action pins, "keep it simple").
 - `techne/pt-techne-ai-context/.github/instructions/techne-team.instructions.md` —
   techne team conventions.
@@ -28,6 +28,7 @@ GHCR container image.
 | `list_teams` | List all teams from pt-logos | No |
 | `get_team` | Get a single team's spec | No |
 | `find_repo` | Find repository owner/team | No |
+| `next_available_cidrs` | Compute next N unallocated GKE subnet CIDR slots | No |
 | `lookup_user` | Look up user across GitHub + Datadog | No |
 | `open_team_pr` | Open/update a PR on pt-logos (idempotent) | Yes |
 | `open_team_docs_pr` | Open/update a PR on pt-ekklesia-docs | Yes |

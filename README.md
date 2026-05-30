@@ -1,6 +1,7 @@
 # Techne MCP Server
 
 [![Tests](https://img.shields.io/github/actions/workflow/status/osinfra-io/pt-techne-mcp-server/go-test.yml?style=for-the-badge&logo=go&color=00ADD8&label=Tests)](https://github.com/osinfra-io/pt-techne-mcp-server/actions/workflows/go-test.yml)
+[![Dependabot](https://img.shields.io/github/actions/workflow/status/osinfra-io/pt-techne-mcp-server/dependabot.yml?style=for-the-badge&logo=github&color=2088FF&label=Dependabot)](https://github.com/osinfra-io/pt-techne-mcp-server/actions/workflows/dependabot.yml)
 
 Model Context Protocol (MCP) server providing platform context and tools to AI assistants. Exposes deterministic, typed tools so platform agents call a tested renderer instead of writing HCL by hand.
 
@@ -109,6 +110,7 @@ For local development, `gh auth token` is the simplest option. See [docs/configu
 | `get_team` | Get a single team's spec and docs pages |
 | `lookup_user` | Find every team/role where a user appears |
 | `find_repo` | Find which team(s) own a repository |
+| `next_available_cidrs` | Compute the next N unallocated GKE subnet CIDR slots |
 | `render_corpus_helpers` | Insert a workspace into pt-corpus `helpers.tofu` |
 | `render_pneuma_helpers` | Insert a workspace into pt-pneuma `helpers.tofu` |
 | `render_team_docs_index` | Render a team's docs index page |
