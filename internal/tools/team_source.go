@@ -117,7 +117,6 @@ func fetchAllTeams(ctx context.Context, c gh.Client, v *spec.Validator, keys []s
 	var mu sync.Mutex
 	var firstOpErr *opError
 	for i, k := range keys {
-		i, k := i, k
 		g.Go(func() error {
 			t, oe := fetchTeam(gctx, c, v, k, ref)
 			if oe != nil {

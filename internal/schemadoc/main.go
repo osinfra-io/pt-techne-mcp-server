@@ -33,7 +33,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "usage: schemadoc <schema.json> <out.md>")
 		os.Exit(2)
 	}
-	data, err := os.ReadFile(os.Args[1])
+	data, err := os.ReadFile(os.Args[1]) //nolint:gosec // dev-only CLI generator; path is its own argv, not untrusted input
 	if err != nil {
 		die(fmt.Errorf("read schema %q: %w", os.Args[1], err))
 	}
@@ -66,7 +66,7 @@ func main() {
 
 	out := strings.TrimRight(b.String(), "\n") + "\n"
 
-	if err := os.WriteFile(os.Args[2], []byte(out), 0o600); err != nil {
+	if err := os.WriteFile(os.Args[2], []byte(out), 0o600); err != nil { //nolint:gosec // dev-only CLI generator; path is its own argv, not untrusted input
 		die(fmt.Errorf("write markdown %q: %w", os.Args[2], err))
 	}
 }
