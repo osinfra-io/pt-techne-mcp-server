@@ -254,7 +254,7 @@ func TestOpenTeamHelpersPR_UpdateExistingPR(t *testing.T) {
 
 	// Both should be updated (commit was pushed), not noop.
 	if out.Corpus.Action != "updated" && out.Corpus.Action != "noop" {
-		t.Logf("corpus action: %q (acceptable: updated or noop)", out.Corpus.Action)
+		t.Fatalf("corpus action: %q (acceptable: updated or noop)", out.Corpus.Action)
 	}
 	if out.Corpus.PRNumber != 10 {
 		t.Fatalf("corpus PR number = %d, want 10", out.Corpus.PRNumber)

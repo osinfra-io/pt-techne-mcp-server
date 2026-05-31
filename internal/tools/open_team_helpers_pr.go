@@ -72,7 +72,7 @@ func OpenTeamHelpersPR(s *mcp.Server, c gh.Client) {
 		}
 
 		workspace := in.TeamKey + "-main-production"
-		title := in.Message
+		title := strings.TrimSpace(in.Message)
 		if title == "" {
 			title = "Add " + workspace + " to pt-corpus and pt-pneuma helpers.tofu"
 		}
