@@ -79,15 +79,17 @@ func TestRenderTeamDocsIndex_MissingDescription(t *testing.T) {
 	if !res.IsError {
 		t.Fatalf("expected error")
 	}
-	var e map[string]any
+	// display_name_comment is now required by the schema, so the error is a
+	// schema validation failure (not docs_input_invalid).
+	var out map[string]any
 	for _, c := range res.Content {
 		if tc, ok := c.(*mcp.TextContent); ok {
-			_ = json.Unmarshal([]byte(tc.Text), &e)
+			_ = json.Unmarshal([]byte(tc.Text), &out)
 			break
 		}
 	}
-	if e["code"] != "docs_input_invalid" {
-		t.Errorf("code=%v want docs_input_invalid", e["code"])
+	if out["valid"] != false {
+		t.Errorf("expected valid=false, got: %v", out)
 	}
 }
 

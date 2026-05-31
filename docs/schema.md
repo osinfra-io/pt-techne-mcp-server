@@ -21,10 +21,10 @@ Team display name. Title Case; spaces and the lowercase word "and" are allowed.
 
 ## `display_name_comment`
 
-Optional inline comment rendered after display_name. Used for the team etymology blurb. Also used as the `description` frontmatter on the team's docs index page (rendered by pt-techne-mcp-server/render_team_docs_index); that tool requires this field.
+Inline comment rendered after display_name in the tfvars file. Used for the team etymology blurb. Also used as the `description` frontmatter on the team's docs index page; render_team_docs_index and open_team_docs_pr require this field to be non-empty — an empty string will produce a docs_input_invalid error.
 
 - **type:** `string`
-- **required:** false
+- **required:** true
 
 ## `enable_google_project`
 
