@@ -1,4 +1,4 @@
-// MCP tool: render_sidebar_patch.
+// MCP tool: render_team_sidebar_patch.
 //
 // Inserts the team's docs index entry into a provided pt-ekklesia-docs
 // sidebars.js. Stateless — the caller supplies the current bytes — so
@@ -19,27 +19,27 @@ import (
 	"github.com/osinfra-io/pt-techne-mcp-server/internal/spec"
 )
 
-// RenderSidebarPatchInput is the input for render_sidebar_patch.
-type RenderSidebarPatchInput struct {
+// RenderTeamSidebarPatchInput is the input for render_team_sidebar_patch.
+type RenderTeamSidebarPatchInput struct {
 	Spec              any    `json:"spec" jsonschema:"the validated team spec; section/team folder are derived from team_type and team_key"`
 	CurrentSidebarsJS string `json:"current_sidebars_js" jsonschema:"current contents of pt-ekklesia-docs/sidebars.js"`
 }
 
-// RenderSidebarPatchOutput is the structured result.
-type RenderSidebarPatchOutput struct {
+// RenderTeamSidebarPatchOutput is the structured result.
+type RenderTeamSidebarPatchOutput struct {
 	Content string `json:"content"`
 }
 
-// RenderSidebarPatch registers the render_sidebar_patch tool.
-func RenderSidebarPatch(s *mcp.Server, v *spec.Validator) {
+// RenderSidebarPatch registers the render_team_sidebar_patch tool.
+func RenderTeamSidebarPatch(s *mcp.Server, v *spec.Validator) {
 	mcp.AddTool(s, &mcp.Tool{
-		Name:        "render_sidebar_patch",
+		Name:        "render_team_sidebar_patch",
 		Description: "Insert a team's docs index entry into the supplied pt-ekklesia-docs sidebars.js, returning the patched content. Byte-stable noop when the entry is already present. Returns source_parse_error when the // region: <section> / // endregion: <section> anchors are missing.",
 		Annotations: &mcp.ToolAnnotations{
 			Title:        "Render sidebar patch",
 			ReadOnlyHint: true,
 		},
-	}, func(_ context.Context, _ *mcp.CallToolRequest, in RenderSidebarPatchInput) (*mcp.CallToolResult, *RenderSidebarPatchOutput, error) {
+	}, func(_ context.Context, _ *mcp.CallToolRequest, in RenderTeamSidebarPatchInput) (*mcp.CallToolResult, *RenderTeamSidebarPatchOutput, error) {
 		specMap, err := coerceSpec(in.Spec)
 		if err != nil {
 			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
@@ -80,6 +80,6 @@ func RenderSidebarPatch(s *mcp.Server, v *spec.Validator) {
 			}
 			return nil, nil, fmt.Errorf("render sidebar: %w", err)
 		}
-		return nil, &RenderSidebarPatchOutput{Content: string(out)}, nil
+		return nil, &RenderTeamSidebarPatchOutput{Content: string(out)}, nil
 	})
 }
