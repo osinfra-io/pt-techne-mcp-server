@@ -33,7 +33,7 @@ type RenderTeamDocsIndexOutput struct {
 func RenderTeamDocsIndex(s *mcp.Server, v *spec.Validator) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "render_team_docs_index",
-		Description: "Validate then render a team spec to the deterministic docs/<section>/<team>/index.md page for osinfra-io/pt-ekklesia-docs. Returns {path, content}. On schema failure returns ValidateOutput; on docs-specific input failure returns docs_input_invalid.",
+		Description: "Validate then render a team spec to the deterministic docs/<section>/<team>/index.md page for osinfra-io/pt-ekklesia-docs. Returns {path, content}. On schema failure returns ValidateOutput; on docs-specific input failure returns docs_input_invalid. display_name_comment must be non-empty in the spec (it becomes the page description and lede paragraph).",
 		Annotations: &mcp.ToolAnnotations{
 			Title:        "Render team docs index",
 			ReadOnlyHint: true,

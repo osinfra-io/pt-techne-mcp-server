@@ -14,6 +14,7 @@ func minimalValid() string {
 		"team_key": "pt-example",
 		"datadog_team_memberships": {"admins": ["a@b.com"], "members": []},
 		"display_name": "Example",
+		"display_name_comment": "An example team used in tests.",
 		"github_parent_team_memberships": {"maintainers": ["x"], "members": []},
 		"google_basic_groups_memberships": {
 			"admin":  {"managers": [], "members": [], "owners": ["a@b.com"]},

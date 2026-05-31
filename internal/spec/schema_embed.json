@@ -9,6 +9,7 @@
     "team_key",
     "datadog_team_memberships",
     "display_name",
+    "display_name_comment",
     "github_parent_team_memberships",
     "google_basic_groups_memberships",
     "team_type"
@@ -35,8 +36,9 @@
       "pattern": "^[A-Z][A-Za-z]*( (and|[A-Z][A-Za-z]*))*$"
     },
     "display_name_comment": {
-      "description": "Optional inline comment rendered after display_name. Used for the team etymology blurb. Also used as the `description` frontmatter on the team's docs index page (rendered by pt-techne-mcp-server/render_team_docs_index); that tool requires this field.",
-      "type": "string"
+      "description": "Inline comment rendered after display_name in the tfvars file. Used for the team etymology blurb. Also used as the `description` frontmatter on the team's docs index page; render_team_docs_index and open_team_docs_pr require this field to be non-empty — an empty string will produce a docs_input_invalid error.",
+      "type": "string",
+      "minLength": 1
     },
     "enable_google_project": {
       "description": "Enable a Google Cloud project for this team in the team's environment folder via pt-corpus. Default: false.",
