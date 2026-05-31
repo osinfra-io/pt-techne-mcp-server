@@ -11,9 +11,7 @@ import (
 	"github.com/osinfra-io/pt-techne-mcp-server/internal/tools"
 )
 
-// helpersHarness wires the two helpers-renderer tools against a fake
-// gh.Client. Mirrors readToolHarness but isolated because these tools
-// don't share the readToolHarness's pt-logos teams seeding.
+// helpersHarness wires the render_team_helpers tool against a fake gh.Client.
 type helpersHarness struct {
 	t  *testing.T
 	cs *mcp.ClientSession
@@ -22,8 +20,7 @@ type helpersHarness struct {
 func newHelpersHarness(t *testing.T, c gh.Client) *helpersHarness {
 	t.Helper()
 	server := mcp.NewServer(&mcp.Implementation{Name: "test"}, nil)
-	tools.RenderCorpusHelpers(server, c)
-	tools.RenderPneumaHelpers(server, c)
+	tools.RenderTeamHelpers(server, c)
 
 	ct, st := mcp.NewInMemoryTransports()
 	ctx := context.Background()
@@ -39,11 +36,11 @@ func newHelpersHarness(t *testing.T, c gh.Client) *helpersHarness {
 	return &helpersHarness{t: t, cs: cs}
 }
 
-func (h *helpersHarness) call(name string, args any) *mcp.CallToolResult {
+func (h *helpersHarness) call(args any) *mcp.CallToolResult {
 	h.t.Helper()
-	res, err := h.cs.CallTool(context.Background(), &mcp.CallToolParams{Name: name, Arguments: args})
+	res, err := h.cs.CallTool(context.Background(), &mcp.CallToolParams{Name: "render_team_helpers", Arguments: args})
 	if err != nil {
-		h.t.Fatalf("CallTool %s: %v", name, err)
+		h.t.Fatalf("CallTool render_team_helpers: %v", err)
 	}
 	return res
 }
@@ -77,87 +74,79 @@ const pneumaHelpersFixture = `module "core_helpers" {
 func seedHelpersFake() *fakeClient {
 	f := newFake()
 	f.repoFiles["pt-corpus/helpers.tofu@main"] = corpusHelpersFixture
-	f.repoFiles["pt-pneuma/helpers.tofu@main"] = pneumaHelpersFixture
+	f.repoFiles["pt-pneuma/shared/helpers.tofu@main"] = pneumaHelpersFixture
 	return f
 }
 
-func TestRenderCorpusHelpers_Insert(t *testing.T) {
+func TestRenderTeamHelpers_HappyPath(t *testing.T) {
 	h := newHelpersHarness(t, seedHelpersFake())
-	res := h.call("render_corpus_helpers", map[string]any{"team_key": "pt-newteam"})
-	var out tools.RenderCorpusHelpersOutput
+	res := h.call(map[string]any{"team_key": "pt-newteam"})
+	var out tools.RenderTeamHelpersOutput
 	decodeStruct(t, res, &out)
-	if !strings.Contains(out.HelpersTofu, `"pt-newteam-main-production",`) {
-		t.Fatalf("inserted line not found:\n%s", out.HelpersTofu)
-	}
-	// Sorted insert position: between pt-logos and pt-pneuma.
-	wantOrder := []string{
+
+	// Corpus: sorted insert position between pt-logos and pt-pneuma.
+	wantCorpusOrder := []string{
 		`"pt-corpus-main-production"`,
 		`"pt-logos-main-production"`,
 		`"pt-newteam-main-production"`,
 		`"pt-pneuma-main-production"`,
 	}
 	prev := -1
-	for _, s := range wantOrder {
-		idx := strings.Index(out.HelpersTofu, s)
+	for _, s := range wantCorpusOrder {
+		idx := strings.Index(out.Corpus.HelpersTofu, s)
 		if idx < 0 {
-			t.Fatalf("missing %s in output:\n%s", s, out.HelpersTofu)
+			t.Fatalf("corpus: missing %s in output:\n%s", s, out.Corpus.HelpersTofu)
 		}
 		if idx <= prev {
-			t.Fatalf("entries out of order; %s appeared before previous entry", s)
+			t.Fatalf("corpus: entries out of order; %s appeared before previous entry", s)
 		}
 		prev = idx
 	}
+
+	// Pneuma: inserted with trailing-comma style.
+	if !strings.Contains(out.Pneuma.HelpersTofu, `    "pt-newteam-main-production",`) {
+		t.Fatalf("pneuma: inserted line not found:\n%s", out.Pneuma.HelpersTofu)
+	}
+	if !strings.Contains(out.Pneuma.HelpersTofu, `    "pt-pneuma-main-production",`+"\n  ]") {
+		t.Fatalf("pneuma: trailing-comma style not preserved:\n%s", out.Pneuma.HelpersTofu)
+	}
 }
 
-func TestRenderPneumaHelpers_Insert(t *testing.T) {
+func TestRenderTeamHelpers_IdempotentBoth(t *testing.T) {
 	h := newHelpersHarness(t, seedHelpersFake())
-	res := h.call("render_pneuma_helpers", map[string]any{"team_key": "pt-newteam"})
-	var out tools.RenderPneumaHelpersOutput
+
+	res := h.call(map[string]any{"team_key": "pt-logos"})
+	var out tools.RenderTeamHelpersOutput
 	decodeStruct(t, res, &out)
-	if !strings.Contains(out.HelpersTofu, `    "pt-newteam-main-production",`) {
-		t.Fatalf("inserted line not found:\n%s", out.HelpersTofu)
-	}
-	if !strings.Contains(out.HelpersTofu, `    "pt-pneuma-main-production",`+"\n  ]") {
-		t.Fatalf("trailing-comma style not preserved:\n%s", out.HelpersTofu)
-	}
-}
-
-func TestRenderHelpers_Idempotent(t *testing.T) {
-	h := newHelpersHarness(t, seedHelpersFake())
-
-	res := h.call("render_corpus_helpers", map[string]any{"team_key": "pt-logos"})
-	var corpusOut tools.RenderCorpusHelpersOutput
-	decodeStruct(t, res, &corpusOut)
-	if corpusOut.HelpersTofu != corpusHelpersFixture {
-		t.Fatalf("noop must return byte-identical helpers.tofu\n--- got ---\n%s\n--- want ---\n%s", corpusOut.HelpersTofu, corpusHelpersFixture)
+	if out.Corpus.HelpersTofu != corpusHelpersFixture {
+		t.Fatalf("corpus noop must return byte-identical helpers.tofu\n--- got ---\n%s\n--- want ---\n%s",
+			out.Corpus.HelpersTofu, corpusHelpersFixture)
 	}
 
-	res = h.call("render_pneuma_helpers", map[string]any{"team_key": "pt-pneuma"})
-	var pneumaOut tools.RenderPneumaHelpersOutput
-	decodeStruct(t, res, &pneumaOut)
-	if pneumaOut.HelpersTofu != pneumaHelpersFixture {
-		t.Fatalf("noop must return byte-identical helpers.tofu\n--- got ---\n%s\n--- want ---\n%s", pneumaOut.HelpersTofu, pneumaHelpersFixture)
+	// pt-pneuma is already present in pneumaHelpersFixture.
+	res = h.call(map[string]any{"team_key": "pt-pneuma"})
+	var out2 tools.RenderTeamHelpersOutput
+	decodeStruct(t, res, &out2)
+	if out2.Pneuma.HelpersTofu != pneumaHelpersFixture {
+		t.Fatalf("pneuma noop must return byte-identical helpers.tofu\n--- got ---\n%s\n--- want ---\n%s",
+			out2.Pneuma.HelpersTofu, pneumaHelpersFixture)
 	}
 }
 
-func TestRenderHelpers_NotConfigured(t *testing.T) {
+func TestRenderTeamHelpers_NotConfigured(t *testing.T) {
 	h := newHelpersHarness(t, nil)
-	for _, name := range []string{"render_corpus_helpers", "render_pneuma_helpers"} {
-		t.Run(name, func(t *testing.T) {
-			res := h.call(name, map[string]any{"team_key": "pt-newteam"})
-			body := decodeError(t, res)
-			if body["code"] != "not_configured" {
-				t.Fatalf("expected not_configured, got %+v", body)
-			}
-		})
+	res := h.call(map[string]any{"team_key": "pt-newteam"})
+	body := decodeError(t, res)
+	if body["code"] != "not_configured" {
+		t.Fatalf("expected not_configured, got %+v", body)
 	}
 }
 
-func TestRenderHelpers_InvalidInput(t *testing.T) {
+func TestRenderTeamHelpers_InvalidInput(t *testing.T) {
 	h := newHelpersHarness(t, seedHelpersFake())
 	for _, bad := range []string{"", "no-prefix", "pt-", "pt-Foo", "PT-bar"} {
 		t.Run(bad, func(t *testing.T) {
-			res := h.call("render_corpus_helpers", map[string]any{"team_key": bad})
+			res := h.call(map[string]any{"team_key": bad})
 			body := decodeError(t, res)
 			if body["code"] != "invalid_input" {
 				t.Fatalf("expected invalid_input for %q, got %+v", bad, body)
@@ -166,10 +155,12 @@ func TestRenderHelpers_InvalidInput(t *testing.T) {
 	}
 }
 
-func TestRenderHelpers_FileMissing(t *testing.T) {
-	f := newFake() // no repoFiles seeded
+func TestRenderTeamHelpers_CorpusFileMissing(t *testing.T) {
+	f := newFake()
+	// Only seed pneuma; corpus is absent.
+	f.repoFiles["pt-pneuma/shared/helpers.tofu@main"] = pneumaHelpersFixture
 	h := newHelpersHarness(t, f)
-	res := h.call("render_corpus_helpers", map[string]any{"team_key": "pt-newteam"})
+	res := h.call(map[string]any{"team_key": "pt-newteam"})
 	body := decodeError(t, res)
 	if body["code"] != "source_parse_error" {
 		t.Fatalf("expected source_parse_error, got %+v", body)
@@ -179,13 +170,29 @@ func TestRenderHelpers_FileMissing(t *testing.T) {
 	}
 }
 
-func TestRenderHelpers_MalformedSource(t *testing.T) {
+func TestRenderTeamHelpers_PneumaFileMissing(t *testing.T) {
+	f := newFake()
+	// Only seed corpus; pneuma is absent.
+	f.repoFiles["pt-corpus/helpers.tofu@main"] = corpusHelpersFixture
+	h := newHelpersHarness(t, f)
+	res := h.call(map[string]any{"team_key": "pt-newteam"})
+	body := decodeError(t, res)
+	if body["code"] != "source_parse_error" {
+		t.Fatalf("expected source_parse_error, got %+v", body)
+	}
+	if !strings.Contains(body["message"].(string), "missing") {
+		t.Fatalf("expected 'missing' in message, got %v", body["message"])
+	}
+}
+
+func TestRenderTeamHelpers_MalformedCorpus(t *testing.T) {
 	f := newFake()
 	f.repoFiles["pt-corpus/helpers.tofu@main"] = `# no module block here
 foo = "bar"
 `
+	f.repoFiles["pt-pneuma/shared/helpers.tofu@main"] = pneumaHelpersFixture
 	h := newHelpersHarness(t, f)
-	res := h.call("render_corpus_helpers", map[string]any{"team_key": "pt-newteam"})
+	res := h.call(map[string]any{"team_key": "pt-newteam"})
 	body := decodeError(t, res)
 	if body["code"] != "source_parse_error" {
 		t.Fatalf("expected source_parse_error, got %+v", body)

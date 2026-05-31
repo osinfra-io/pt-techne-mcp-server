@@ -64,11 +64,11 @@ func main() {
 	tools.LookupUser(server, v, ghClient)
 	tools.FindRepo(server, v, ghClient)
 	tools.NextAvailableCidrs(server, v, ghClient)
-	tools.RenderCorpusHelpers(server, ghClient)
-	tools.RenderPneumaHelpers(server, ghClient)
+	tools.RenderTeamHelpers(server, ghClient)
 	tools.RenderTeamDocsIndex(server, v)
-	tools.RenderSidebarPatch(server, v)
+	tools.RenderTeamSidebarPatch(server, v)
 	tools.OpenTeamDocsPR(server, v, ghClient)
+	tools.OpenTeamHelpersPR(server, ghClient)
 
 	if err := server.Run(ctx, &mcp.StdioTransport{}); err != nil {
 		log.Fatalf("server: %v", err)

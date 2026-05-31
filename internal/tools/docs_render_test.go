@@ -33,7 +33,7 @@ func runDocsTool(t *testing.T, name string, args any) *mcp.CallToolResult {
 	}
 	server := mcp.NewServer(&mcp.Implementation{Name: "test"}, nil)
 	tools.RenderTeamDocsIndex(server, v)
-	tools.RenderSidebarPatch(server, v)
+	tools.RenderTeamSidebarPatch(server, v)
 
 	ct, st := mcp.NewInMemoryTransports()
 	ctx := context.Background()
@@ -102,15 +102,15 @@ func TestRenderTeamDocsIndex_ValidationFailure(t *testing.T) {
 	}
 }
 
-func TestRenderSidebarPatch_Insert(t *testing.T) {
-	res := runDocsTool(t, "render_sidebar_patch", map[string]any{
+func TestRenderTeamSidebarPatch_Insert(t *testing.T) {
+	res := runDocsTool(t, "render_team_sidebar_patch", map[string]any{
 		"spec":                validSpec(),
 		"current_sidebars_js": sidebarsFixture,
 	})
 	if res.IsError {
 		t.Fatalf("unexpected error: %+v", res)
 	}
-	var out tools.RenderSidebarPatchOutput
+	var out tools.RenderTeamSidebarPatchOutput
 	if err := json.Unmarshal(structuredOrText(t, res), &out); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
@@ -119,8 +119,8 @@ func TestRenderSidebarPatch_Insert(t *testing.T) {
 	}
 }
 
-func TestRenderSidebarPatch_MissingAnchors(t *testing.T) {
-	res := runDocsTool(t, "render_sidebar_patch", map[string]any{
+func TestRenderTeamSidebarPatch_MissingAnchors(t *testing.T) {
+	res := runDocsTool(t, "render_team_sidebar_patch", map[string]any{
 		"spec":                validSpec(),
 		"current_sidebars_js": "// no anchors here\n",
 	})
@@ -139,8 +139,8 @@ func TestRenderSidebarPatch_MissingAnchors(t *testing.T) {
 	}
 }
 
-func TestRenderSidebarPatch_RequiresCurrentBytes(t *testing.T) {
-	res := runDocsTool(t, "render_sidebar_patch", map[string]any{"spec": validSpec()})
+func TestRenderTeamSidebarPatch_RequiresCurrentBytes(t *testing.T) {
+	res := runDocsTool(t, "render_team_sidebar_patch", map[string]any{"spec": validSpec()})
 	if !res.IsError {
 		t.Fatalf("expected error")
 	}
