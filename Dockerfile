@@ -7,7 +7,7 @@
 #                  installation token (e.g. from actions/create-github-app-token).
 #                  See README "Configuration" for required permissions.
 
-FROM golang:1.26.3-alpine AS build
+FROM golang:1.26.4-alpine AS build
 WORKDIR /src
 
 RUN apk add --no-cache ca-certificates
