@@ -56,7 +56,7 @@ GitHub child team memberships. The four standard teams (sandbox-approvers, non-p
 
 ## `github_parent_team_memberships`
 
-GitHub parent team memberships. All team members should be listed here. Use GitHub usernames (NOT email addresses).
+GitHub team membership. maintainers have admin rights on the team; members have read access.
 
 - **type:** `object`
 - **required:** true
@@ -77,14 +77,14 @@ Google Cloud Identity basic groups: admin, reader, writer.
 
 ## `google_browser_groups_memberships`
 
-pt-corpus only. Per-environment console browse access for pt-corpus service accounts.
+Google Cloud Identity group memberships scoped to deployment environments. Each present key (sandbox, non-production, production) configures the group membership for that environment. Omit an environment key if no group membership is needed for it.
 
 - **type:** `object`
 - **required:** false
 
 ## `google_project_creator_groups_memberships`
 
-pt-corpus only. Per-environment project creator access for pt-corpus service accounts.
+Google Cloud Identity group memberships scoped to deployment environments. Each present key (sandbox, non-production, production) configures the group membership for that environment. Omit an environment key if no group membership is needed for it.
 
 - **type:** `object`
 - **required:** false
@@ -105,7 +105,7 @@ Additional GCP API services to enable in the team project.
 
 ## `google_xpn_admin_groups_memberships`
 
-pt-corpus only. Per-environment shared VPC (XPN) admin access for pt-corpus service accounts.
+Google Cloud Identity group memberships scoped to deployment environments. Each present key (sandbox, non-production, production) configures the group membership for that environment. Omit an environment key if no group membership is needed for it.
 
 - **type:** `object`
 - **required:** false
