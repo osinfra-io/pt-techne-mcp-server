@@ -1,6 +1,6 @@
 # Configuration
 
-## `GITHUB_TOKEN`
+## `NOMOS_GITHUB_TOKEN`
 
 Required by `open_team_pr`, the four pt-logos read tools (`list_teams`, `get_team`, `lookup_user`, `find_repo`), the two helpers renderers (`render_corpus_helpers`, `render_pneuma_helpers`), and `open_team_docs_pr`. Without it the server still serves `validate_team_spec`, `render_team_tfvars`, `render_team_docs_index`, and `render_sidebar_patch`; the GitHub-backed tools return a structured `not_configured` error.
 
@@ -12,14 +12,14 @@ The token must be scoped to **`osinfra-io/pt-logos`**, **`osinfra-io/pt-corpus`*
 
 ### Token sources
 
-- **GitHub App** (recommended for non-interactive deployments). In the App's settings, repository permissions → Contents: Read and write, Pull requests: Read and write; repository access → Only select repositories → `osinfra-io/pt-logos`, `osinfra-io/pt-corpus`, `osinfra-io/pt-pneuma`, `osinfra-io/pt-ekklesia-docs`. Mint installation tokens with [`actions/create-github-app-token`](https://github.com/actions/create-github-app-token) and pass the result as `GITHUB_TOKEN`.
+- **GitHub App** (recommended for non-interactive deployments). In the App's settings, repository permissions → Contents: Read and write, Pull requests: Read and write; repository access → Only select repositories → `osinfra-io/pt-logos`, `osinfra-io/pt-corpus`, `osinfra-io/pt-pneuma`, `osinfra-io/pt-ekklesia-docs`. Mint installation tokens with [`actions/create-github-app-token`](https://github.com/actions/create-github-app-token) and pass the result as `NOMOS_GITHUB_TOKEN`.
 - **Fine-grained PAT** (local development). At <https://github.com/settings/personal-access-tokens>, resource owner `osinfra-io`; repository access → Only select repositories → the four repos above; repository permissions → Contents: Read and write, Pull requests: Read and write.
 - **`gh auth token`** works for local development as long as your account can push to a branch on `pt-logos` and `pt-ekklesia-docs` and open PRs against them, and read `pt-corpus` and `pt-pneuma`.
 - **Classic PAT** is not recommended — the closest equivalent (`repo` scope) grants far more than the tool needs.
 
 ### Rotation
 
-There is nothing to rotate inside the server — restart with a fresh `GITHUB_TOKEN`. Whatever produced the previous token is responsible for revoking it.
+There is nothing to rotate inside the server — restart with a fresh `NOMOS_GITHUB_TOKEN`. Whatever produced the previous token is responsible for revoking it.
 
 ## Operational errors
 
@@ -31,7 +31,7 @@ All tools return structured MCP `isError` results:
 
   | `code` | `retryable` | Meaning |
   |---|---|---|
-  | `not_configured` | false | `GITHUB_TOKEN` was empty at startup. Set it and restart. |
+  | `not_configured` | false | `NOMOS_GITHUB_TOKEN` was empty at startup. Set it and restart. |
   | `not_found` | false | `get_team` was called with an unknown `team_key`. |
   | `invalid_input` | false | `lookup_user` was called with neither or both of `github_username` and `email`; or `render_corpus_helpers`/`render_pneuma_helpers` was called with a `team_key` that does not match the team-spec regex; or `render_sidebar_patch` was called without `current_sidebars_js`; or `find_repo` was called with an empty `name`. |
   | `docs_input_invalid` | false | `render_team_docs_index`, `render_sidebar_patch`, or `open_team_docs_pr` was given a spec the docs renderer can't use (missing `display_name_comment`, unknown `team_type`, `team_key` without a recognised prefix). |

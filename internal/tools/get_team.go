@@ -26,11 +26,11 @@ type GetTeamOutput struct {
 	DocsPages []string       `json:"docs_pages,omitempty"`
 }
 
-// GetTeam registers the get_team tool. Requires GITHUB_TOKEN.
+// GetTeam registers the get_team tool. Requires NOMOS_GITHUB_TOKEN.
 func GetTeam(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "get_team",
-		Description: "Fetch one team's parsed spec from teams/<team_key>.tfvars in osinfra-io/pt-logos@main. Returns {spec: <object>} in the same JSON shape validate_team_spec and render_team_tfvars accept. Requires GITHUB_TOKEN.",
+		Description: "Fetch one team's parsed spec from teams/<team_key>.tfvars in osinfra-io/pt-logos@main. Returns {spec: <object>} in the same JSON shape validate_team_spec and render_team_tfvars accept. Requires NOMOS_GITHUB_TOKEN.",
 		Annotations: &mcp.ToolAnnotations{
 			Title:        "Get team",
 			ReadOnlyHint: true,

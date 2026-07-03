@@ -18,7 +18,7 @@ Add this entry to your MCP client config (e.g. `.copilot/mcp.json`, `mcp.json`):
       "command": "docker",
       "args": [
         "run", "-i", "--rm",
-        "-e", "GITHUB_TOKEN",
+        "-e", "NOMOS_GITHUB_TOKEN",
         "ghcr.io/osinfra-io/pt-techne-mcp-server:latest"
       ]
     }
@@ -44,7 +44,7 @@ Then configure your MCP client:
     "pt-techne-mcp-server": {
       "command": "/path/to/pt-techne-mcp-server-linux-amd64",
       "env": {
-        "GITHUB_TOKEN": "<YOUR_TOKEN>"
+        "NOMOS_GITHUB_TOKEN": "<YOUR_TOKEN>"
       }
     }
   }
@@ -63,7 +63,7 @@ go install github.com/osinfra-io/pt-techne-mcp-server/cmd/pt-techne-mcp-server@l
     "pt-techne-mcp-server": {
       "command": "pt-techne-mcp-server",
       "env": {
-        "GITHUB_TOKEN": "<YOUR_TOKEN>"
+        "NOMOS_GITHUB_TOKEN": "<YOUR_TOKEN>"
       }
     }
   }
@@ -95,7 +95,7 @@ cosign verify-blob pt-techne-mcp-server-linux-amd64 \
 
 ### Configuration
 
-Set `GITHUB_TOKEN` with access to `osinfra-io/pt-logos`, `osinfra-io/pt-corpus`, `osinfra-io/pt-pneuma`, and `osinfra-io/pt-ekklesia-docs`. Without it, GitHub-backed tools return `not_configured`; offline tools (`validate_team_spec`, `render_team_tfvars`, `render_team_docs_index`, `render_sidebar_patch`) still work.
+Set `NOMOS_GITHUB_TOKEN` with access to `osinfra-io/pt-logos`, `osinfra-io/pt-corpus`, `osinfra-io/pt-pneuma`, and `osinfra-io/pt-ekklesia-docs`. Without it, GitHub-backed tools return `not_configured`; offline tools (`validate_team_spec`, `render_team_tfvars`, `render_team_docs_index`, `render_sidebar_patch`) still work.
 
 For local development, `gh auth token` is the simplest option. See [docs/configuration.md](docs/configuration.md) for full details on token scopes, sources, and operational error codes.
 

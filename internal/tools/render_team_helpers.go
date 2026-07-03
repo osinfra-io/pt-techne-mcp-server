@@ -34,12 +34,12 @@ type RenderTeamHelpersResult struct {
 }
 
 // RenderTeamHelpers registers the render_team_helpers tool.
-// Requires GITHUB_TOKEN with read access to osinfra-io/pt-corpus and
+// Requires NOMOS_GITHUB_TOKEN with read access to osinfra-io/pt-corpus and
 // osinfra-io/pt-pneuma.
 func RenderTeamHelpers(s *mcp.Server, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "render_team_helpers",
-		Description: "Fetch helpers.tofu from both osinfra-io/pt-corpus and osinfra-io/pt-pneuma@main and return canonical bytes with '<team_key>-main-production' inserted into logos_workspaces in each. Idempotent: returns the input bytes unchanged when the workspace is already present. Requires GITHUB_TOKEN.",
+		Description: "Fetch helpers.tofu from both osinfra-io/pt-corpus and osinfra-io/pt-pneuma@main and return canonical bytes with '<team_key>-main-production' inserted into logos_workspaces in each. Idempotent: returns the input bytes unchanged when the workspace is already present. Requires NOMOS_GITHUB_TOKEN.",
 		Annotations: &mcp.ToolAnnotations{
 			Title:        "Render team helpers",
 			ReadOnlyHint: true,

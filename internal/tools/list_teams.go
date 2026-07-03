@@ -37,11 +37,11 @@ type ListTeamsOutput struct {
 	Teams []TeamSummary `json:"teams"`
 }
 
-// ListTeams registers the list_teams tool. Requires GITHUB_TOKEN.
+// ListTeams registers the list_teams tool. Requires NOMOS_GITHUB_TOKEN.
 func ListTeams(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "list_teams",
-		Description: "List every team defined under teams/ in osinfra-io/pt-logos@main, with one summary row per team. Requires GITHUB_TOKEN.",
+		Description: "List every team defined under teams/ in osinfra-io/pt-logos@main, with one summary row per team. Requires NOMOS_GITHUB_TOKEN.",
 		Annotations: &mcp.ToolAnnotations{
 			Title:        "List teams",
 			ReadOnlyHint: true,

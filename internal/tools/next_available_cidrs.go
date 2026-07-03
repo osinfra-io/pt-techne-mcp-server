@@ -26,11 +26,11 @@ type NextAvailableCidrsOutput struct {
 }
 
 // NextAvailableCidrs registers the next_available_cidrs tool.
-// Requires GITHUB_TOKEN.
+// Requires NOMOS_GITHUB_TOKEN.
 func NextAvailableCidrs(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "next_available_cidrs",
-		Description: "Compute the next N unallocated GKE subnet CIDR slots by scanning all team specs in osinfra-io/pt-logos@main. Returns deterministic CIDR allocations for ip_cidr_range, pod_ip_cidr_range, services_ip_cidr_range, and master_ipv4_cidr_block. Requires GITHUB_TOKEN.",
+		Description: "Compute the next N unallocated GKE subnet CIDR slots by scanning all team specs in osinfra-io/pt-logos@main. Returns deterministic CIDR allocations for ip_cidr_range, pod_ip_cidr_range, services_ip_cidr_range, and master_ipv4_cidr_block. Requires NOMOS_GITHUB_TOKEN.",
 		Annotations: &mcp.ToolAnnotations{
 			Title:        "Next available CIDRs",
 			ReadOnlyHint: true,

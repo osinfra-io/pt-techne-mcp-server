@@ -43,12 +43,12 @@ type TeamHelpersPRResult struct {
 }
 
 // OpenTeamHelpersPR registers the open_team_helpers_pr tool.
-// Requires GITHUB_TOKEN with write access to osinfra-io/pt-corpus and
+// Requires NOMOS_GITHUB_TOKEN with write access to osinfra-io/pt-corpus and
 // osinfra-io/pt-pneuma.
 func OpenTeamHelpersPR(s *mcp.Server, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "open_team_helpers_pr",
-		Description: "Render helpers.tofu for both osinfra-io/pt-corpus and osinfra-io/pt-pneuma and open-or-update a PR in each with '<team_key>-main-production' inserted into logos_workspaces. Idempotent: returns action=noop per repo when the rendered content already matches the branch (with an open PR) or main. Requires GITHUB_TOKEN.",
+		Description: "Render helpers.tofu for both osinfra-io/pt-corpus and osinfra-io/pt-pneuma and open-or-update a PR in each with '<team_key>-main-production' inserted into logos_workspaces. Idempotent: returns action=noop per repo when the rendered content already matches the branch (with an open PR) or main. Requires NOMOS_GITHUB_TOKEN.",
 		Annotations: &mcp.ToolAnnotations{
 			Title:        "Open team helpers PR",
 			ReadOnlyHint: false,
