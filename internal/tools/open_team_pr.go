@@ -53,7 +53,7 @@ const coAuthoredTrailer = "\n\nCo-authored-by: Copilot <223556219+Copilot@users.
 func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "open_team_pr",
-		Description: "Validate, render, and open-or-update a PR on osinfra-io/pt-logos for the given team spec. Idempotent: returns action=noop when the rendered tfvars already match the branch (with an open PR) or main. Requires GITHUB_TOKEN to be configured at server startup.",
+		Description: "Validate, render, and open-or-update a PR on osinfra-io/pt-logos for the given team spec. Idempotent: returns action=noop when the rendered tfvars already match the branch (with an open PR) or main. Requires NOMOS_GITHUB_TOKEN to be configured at server startup.",
 		Annotations: &mcp.ToolAnnotations{
 			Title:        "Open team PR",
 			ReadOnlyHint: false,
@@ -63,7 +63,7 @@ func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 		if c == nil {
 			return errResult(opError{
 				Code:    "not_configured",
-				Message: "open_team_pr requires GITHUB_TOKEN; see README Configuration",
+				Message: "open_team_pr requires NOMOS_GITHUB_TOKEN; see README Configuration",
 			}), nil, nil
 		}
 		specMap, err := coerceSpec(in.Spec)

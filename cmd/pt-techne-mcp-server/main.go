@@ -5,19 +5,19 @@
 //   - validate_team_spec      — validate a team spec against schema/team.schema.json
 //   - render_team_tfvars      — render a validated spec to canonical pt-logos tfvars
 //   - open_team_pr            — open or update a PR on osinfra-io/pt-logos with the
-//     rendered tfvars (requires GITHUB_TOKEN)
-//   - list_teams              — summary index of every team in pt-logos@main (requires GITHUB_TOKEN)
-//   - get_team                — parsed spec + docs_pages for one team (requires GITHUB_TOKEN)
-//   - lookup_user             — every team and role a user appears in (requires GITHUB_TOKEN)
-//   - find_repo               — which team owns a github repository (requires GITHUB_TOKEN)
-//   - next_available_cidrs    — compute next N unallocated GKE subnet CIDR slots (requires GITHUB_TOKEN)
+//     rendered tfvars (requires NOMOS_GITHUB_TOKEN)
+//   - list_teams              — summary index of every team in pt-logos@main (requires NOMOS_GITHUB_TOKEN)
+//   - get_team                — parsed spec + docs_pages for one team (requires NOMOS_GITHUB_TOKEN)
+//   - lookup_user             — every team and role a user appears in (requires NOMOS_GITHUB_TOKEN)
+//   - find_repo               — which team owns a github repository (requires NOMOS_GITHUB_TOKEN)
+//   - next_available_cidrs    — compute next N unallocated GKE subnet CIDR slots (requires NOMOS_GITHUB_TOKEN)
 //   - render_corpus_helpers   — insert a team's main-production workspace into
-//     osinfra-io/pt-corpus/helpers.tofu (requires GITHUB_TOKEN)
-//   - render_pneuma_helpers   — same for osinfra-io/pt-pneuma/helpers.tofu (requires GITHUB_TOKEN)
+//     osinfra-io/pt-corpus/helpers.tofu (requires NOMOS_GITHUB_TOKEN)
+//   - render_pneuma_helpers   — same for osinfra-io/pt-pneuma/helpers.tofu (requires NOMOS_GITHUB_TOKEN)
 //   - render_team_docs_index  — render the team's docs/<section>/<team>/index.md page
 //   - render_sidebar_patch    — patch a supplied pt-ekklesia-docs sidebars.js
 //   - open_team_docs_pr       — open or update a PR on osinfra-io/pt-ekklesia-docs
-//     with the rendered docs index + sidebars patch (requires GITHUB_TOKEN)
+//     with the rendered docs index + sidebars patch (requires NOMOS_GITHUB_TOKEN)
 //
 // Transport is stdio only.
 package main
@@ -46,7 +46,7 @@ func main() {
 	}
 
 	var ghClient gh.Client
-	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+	if token := os.Getenv("NOMOS_GITHUB_TOKEN"); token != "" {
 		ghClient = gh.New(ctx, token)
 	}
 

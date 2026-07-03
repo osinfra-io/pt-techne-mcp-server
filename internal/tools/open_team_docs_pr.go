@@ -51,7 +51,7 @@ const sidebarsPath = "sidebars.js"
 func OpenTeamDocsPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "open_team_docs_pr",
-		Description: "Validate, render index.md, patch sidebars.js, and open-or-update a PR on osinfra-io/pt-ekklesia-docs for the given team spec. Idempotent. display_name_comment must be non-empty in the spec (it becomes the page description and lede paragraph). Requires GITHUB_TOKEN with write access to pt-ekklesia-docs.",
+		Description: "Validate, render index.md, patch sidebars.js, and open-or-update a PR on osinfra-io/pt-ekklesia-docs for the given team spec. Idempotent. display_name_comment must be non-empty in the spec (it becomes the page description and lede paragraph). Requires NOMOS_GITHUB_TOKEN with write access to pt-ekklesia-docs.",
 		Annotations: &mcp.ToolAnnotations{
 			Title:        "Open team docs PR",
 			ReadOnlyHint: false,

@@ -28,11 +28,11 @@ type FindRepoOutput struct {
 	Matches []FindRepoMatch `json:"matches"`
 }
 
-// FindRepo registers the find_repo tool. Requires GITHUB_TOKEN.
+// FindRepo registers the find_repo tool. Requires NOMOS_GITHUB_TOKEN.
 func FindRepo(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "find_repo",
-		Description: "Find which team(s) own a github repository. Walks every team's github_repositories block in osinfra-io/pt-logos@main and returns matches by exact repository name (case-sensitive, matching GitHub). Requires GITHUB_TOKEN.",
+		Description: "Find which team(s) own a github repository. Walks every team's github_repositories block in osinfra-io/pt-logos@main and returns matches by exact repository name (case-sensitive, matching GitHub). Requires NOMOS_GITHUB_TOKEN.",
 		Annotations: &mcp.ToolAnnotations{
 			Title:        "Find repository owner",
 			ReadOnlyHint: true,

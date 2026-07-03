@@ -33,7 +33,7 @@ GHCR container image.
 | `open_team_pr` | Open/update a PR on pt-logos (idempotent) | Yes |
 | `open_team_docs_pr` | Open/update a PR on pt-ekklesia-docs | Yes |
 
-All tools require `GITHUB_TOKEN`. Without it, read tools return
+All tools require `NOMOS_GITHUB_TOKEN`. Without it, read tools return
 `not_configured`; write tools do the same.
 
 ## Hard rules
@@ -57,7 +57,7 @@ The allowed list is fixed. Adding a dependency requires explicit discussion.
 - `github.com/modelcontextprotocol/go-sdk` — MCP transport + tool SDK
 - `github.com/santhosh-tekuri/jsonschema/v6` — JSON Schema validation
 - `github.com/google/go-github/v68` — GitHub API client
-- `golang.org/x/oauth2` — static `TokenSource` for `GITHUB_TOKEN`
+- `golang.org/x/oauth2` — static `TokenSource` for `NOMOS_GITHUB_TOKEN`
 - `github.com/hashicorp/hcl/v2` + `github.com/zclconf/go-cty` — HCL2
   round-trip parser for `.tfvars`
 - `golang.org/x/sync` — `errgroup` for bounded concurrent fetches

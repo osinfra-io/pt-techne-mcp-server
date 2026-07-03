@@ -55,11 +55,11 @@ type LookupUserOutput struct {
 	Matches []LookupUserMatch `json:"matches"`
 }
 
-// LookupUser registers the lookup_user tool. Requires GITHUB_TOKEN.
+// LookupUser registers the lookup_user tool. Requires NOMOS_GITHUB_TOKEN.
 func LookupUser(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "lookup_user",
-		Description: "Find every team and role where a user appears across all teams in osinfra-io/pt-logos@main. Provide exactly one of github_username (matched case-insensitively against GitHub roles) or email (matched case-insensitively against Datadog and Google group roles). Returns {matches: []} (possibly empty) — empty is success, not an error. Requires GITHUB_TOKEN.",
+		Description: "Find every team and role where a user appears across all teams in osinfra-io/pt-logos@main. Provide exactly one of github_username (matched case-insensitively against GitHub roles) or email (matched case-insensitively against Datadog and Google group roles). Returns {matches: []} (possibly empty) — empty is success, not an error. Requires NOMOS_GITHUB_TOKEN.",
 		Annotations: &mcp.ToolAnnotations{
 			Title:        "Look up user",
 			ReadOnlyHint: true,
