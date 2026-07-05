@@ -470,7 +470,7 @@ func emitGKENamespaces(w *writer, namespaces map[string]spec.GKENamespace) {
 			w.blank()
 		}
 		w.indent += 2
-		w.line(k + " = {")
+		w.line(quote(k) + " = {")
 		w.indent += 2
 		emitGKENamespaceBody(w, namespaces[k])
 		w.indent -= 2

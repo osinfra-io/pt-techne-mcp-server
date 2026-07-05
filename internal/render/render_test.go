@@ -114,10 +114,72 @@ func TestRenderIncludesKubernetesNamespaces(t *testing.T) {
 	if !strings.Contains(out, "namespaces = {") {
 		t.Fatalf("render output missing namespaces block:\n%s", out)
 	}
-	if !strings.Contains(out, "openbao = {") {
-		t.Fatalf("render output missing namespace entry:\n%s", out)
+	if !strings.Contains(out, `"openbao" = {`) {
+		t.Fatalf("render output missing quoted namespace entry:\n%s", out)
 	}
 	if !strings.Contains(out, `istio_injection = "disabled"`) {
 		t.Fatalf("render output missing istio_injection field:\n%s", out)
+	}
+}
+
+func TestRenderNamespaceKeysAreQuoted(t *testing.T) {
+	var team spec.Team
+	input := []byte(`{
+  "team_key": "pt-kryptos",
+  "datadog_team_memberships": { "admins": [], "members": [] },
+  "display_name": "Pt Kryptos",
+  "github_parent_team_memberships": { "maintainers": [], "members": [] },
+  "google_basic_groups_memberships": {
+    "admin": { "managers": [], "members": [], "owners": [] },
+    "reader": { "managers": [], "members": [], "owners": [] },
+    "writer": { "managers": [], "members": [], "owners": [] }
+  },
+  "platform_managed_project": {
+    "kubernetes_engine": {
+      "locations": {
+        "us-east1-b": {
+          "node_pools": {
+            "default-pool": {
+              "machine_type": "e2-standard-2",
+              "max_node_count": 3,
+              "min_node_count": 1
+            }
+          },
+          "subnet": {
+            "ip_cidr_range": "10.60.96.0/20",
+            "master_ipv4_cidr_block": "10.63.192.96/28",
+            "pod_ip_cidr_range": "10.12.0.0/15",
+            "services_ip_cidr_range": "10.62.64.0/20"
+          }
+        }
+      },
+      "namespaces": {
+        "istio-system": { "istio_injection": "enabled" },
+        "kube-system":  { "istio_injection": "disabled" }
+      }
+    }
+  },
+  "team_type": "platform-team"
+}`)
+
+	if err := json.Unmarshal(input, &team); err != nil {
+		t.Fatalf("decode input: %v", err)
+	}
+
+	got, err := Render(&team)
+	if err != nil {
+		t.Fatalf("render: %v", err)
+	}
+
+	out := string(got)
+	for _, ns := range []string{"istio-system", "kube-system"} {
+		want := `"` + ns + `" = {`
+		if !strings.Contains(out, want) {
+			t.Fatalf("render output: expected quoted key %q, got:\n%s", want, out)
+		}
+		bare := ns + " = {"
+		if strings.Contains(out, bare) {
+			t.Fatalf("render output: found unquoted key %q (invalid HCL):\n%s", bare, out)
+		}
 	}
 }
