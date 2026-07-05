@@ -108,6 +108,11 @@ type KubernetesEngine struct {
 	DNSSubdomain           string                  `json:"dns_subdomain,omitempty"`
 	EnableDatadogAPM       *bool                   `json:"enable_datadog_apm,omitempty"`
 	Locations              map[string]GKELocation  `json:"locations"`
+	Namespaces             map[string]GKENamespace `json:"namespaces,omitempty"`
+}
+
+type GKENamespace struct {
+	IstioInjection string `json:"istio_injection,omitempty"`
 }
 
 type ArtifactRegistryGroups struct {

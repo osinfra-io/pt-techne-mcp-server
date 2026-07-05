@@ -401,6 +401,9 @@ func emitKubernetesEngine(w *writer, k spec.KubernetesEngine) {
 	}
 
 	em(func() { emitGKELocations(w, k.Locations) })
+	if len(k.Namespaces) > 0 {
+		em(func() { emitGKENamespaces(w, k.Namespaces) })
+	}
 	w.indent -= 2
 	w.line("}")
 }
@@ -457,6 +460,30 @@ func emitGKELocationBody(w *writer, l spec.GKELocation) {
 	})
 	w.indent -= 2
 	w.line("}")
+}
+
+func emitGKENamespaces(w *writer, namespaces map[string]spec.GKENamespace) {
+	w.line("namespaces = {")
+	keys := sortedKeys(namespaces)
+	for i, k := range keys {
+		if i > 0 {
+			w.blank()
+		}
+		w.indent += 2
+		w.line(quote(k) + " = {")
+		w.indent += 2
+		emitGKENamespaceBody(w, namespaces[k])
+		w.indent -= 2
+		w.line("}")
+		w.indent -= 2
+	}
+	w.line("}")
+}
+
+func emitGKENamespaceBody(w *writer, ns spec.GKENamespace) {
+	if ns.IstioInjection != "" {
+		w.line("istio_injection = " + quote(ns.IstioInjection))
+	}
 }
 
 // nested returns a fresh writer at +2 indent for collecting block bodies before
