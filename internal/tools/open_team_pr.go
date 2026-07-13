@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -66,30 +65,11 @@ func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 				Message: "open_team_pr requires NOMOS_GITHUB_TOKEN; see README Configuration",
 			}), nil, nil
 		}
-		specMap, err := coerceSpec(in.Spec)
-		if err != nil {
-			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
+		team, errRes, err := specToTeam(v, in.Spec)
+		if errRes != nil || err != nil {
+			return errRes, nil, err
 		}
-		if errs := v.Validate(specMap); len(errs) > 0 {
-			body, merr := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
-			if merr != nil {
-				return nil, nil, fmt.Errorf("marshal validation errors: %w", merr)
-			}
-			return &mcp.CallToolResult{
-				IsError: true,
-				Content: []mcp.Content{&mcp.TextContent{Text: string(body)}},
-			}, nil, nil
-		}
-
-		raw, err := json.Marshal(specMap)
-		if err != nil {
-			return nil, nil, fmt.Errorf("re-marshal spec: %w", err)
-		}
-		var team spec.Team
-		if err := json.Unmarshal(raw, &team); err != nil {
-			return nil, nil, fmt.Errorf("decode validated spec: %w", err)
-		}
-		rendered, err := render.Render(&team)
+		rendered, err := render.Render(team)
 		if err != nil {
 			return nil, nil, fmt.Errorf("render team: %w", err)
 		}
@@ -108,7 +88,7 @@ func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 		}
 		message += coAuthoredTrailer
 
-		out, opErr := openTeamPR(ctx, c, &team, rendered, branch, path, message)
+		out, opErr := openTeamPR(ctx, c, team, rendered, branch, path, message)
 		if opErr != nil {
 			return errResult(*opErr), nil, nil
 		}
@@ -123,25 +103,25 @@ func OpenTeamPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 // op error; never both, never an internal error (caller wraps real Go
 // errors as github_api_error).
 func openTeamPR(ctx context.Context, c gh.Client, team *spec.Team, rendered []byte, branch, path, message string) (*OpenTeamPROutput, *opError) {
-	openPR, err := findOpenPR(ctx, c, branch)
+	openPR, err := findOpenPRInRepo(ctx, c, gh.Repo, branch)
 	if err != nil {
 		return nil, apiError(err)
 	}
 
-	baseSHA, _, err := c.GetRef(ctx, gh.Base)
+	baseSHA, _, err := c.GetRefInRepo(ctx, gh.Repo, gh.Base)
 	if err != nil {
 		return nil, apiError(err)
 	}
 
-	if err := ensureBranch(ctx, c, branch, baseSHA, openPR != nil); err != nil {
+	if err := ensureBranchInRepo(ctx, c, gh.Repo, branch, baseSHA, openPR != nil); err != nil {
 		return nil, err
 	}
 
-	branchBytes, blobSHA, _, err := c.GetFile(ctx, path, branch)
+	branchBytes, blobSHA, _, err := c.GetFileInRepo(ctx, gh.Repo, path, branch)
 	if err != nil {
 		return nil, apiError(err)
 	}
-	mainBytes, _, _, err := c.GetFile(ctx, path, gh.Base)
+	mainBytes, _, _, err := c.GetFileInRepo(ctx, gh.Repo, path, gh.Base)
 	if err != nil {
 		return nil, apiError(err)
 	}
@@ -158,7 +138,7 @@ func openTeamPR(ctx context.Context, c gh.Client, team *spec.Team, rendered []by
 		return &OpenTeamPROutput{Branch: branch, Action: "noop"}, nil
 	}
 
-	commitSHA, opErr := commitWithRetry(ctx, c, path, branch, blobSHA, rendered, message, openPR)
+	commitSHA, opErr := commitWithRetryInRepo(ctx, c, gh.Repo, path, branch, blobSHA, rendered, message, openPR)
 	if opErr != nil {
 		return nil, opErr
 	}
@@ -175,7 +155,7 @@ func openTeamPR(ctx context.Context, c gh.Client, team *spec.Team, rendered []by
 			Branch: branch, CommitSHA: commitSHA, Action: "updated",
 		}, nil
 	}
-	pr, action, opErr := createPRWithReconcile(ctx, c, branch, team)
+	pr, action, opErr := createPRWithReconcileInRepo(ctx, c, gh.Repo, branch, "Update teams/"+team.TeamKey+".tfvars", prBody(team))
 	if opErr != nil {
 		return nil, opErr
 	}
@@ -183,109 +163,6 @@ func openTeamPR(ctx context.Context, c gh.Client, team *spec.Team, rendered []by
 		PRURL: pr.URL, PRNumber: pr.Number,
 		Branch: branch, CommitSHA: commitSHA, Action: action,
 	}, nil
-}
-
-// findOpenPR returns the open PR for branch->main, or nil if none exists.
-func findOpenPR(ctx context.Context, c gh.Client, branch string) (*gh.PullRequest, error) {
-	prs, err := c.ListOpenPRs(ctx, branch, gh.Base)
-	if err != nil {
-		return nil, err
-	}
-	if len(prs) == 0 {
-		return nil, nil
-	}
-	return &prs[0], nil
-}
-
-// ensureBranch resolves the four branch states. hasOpenPR controls the
-// disposable-branch reset path: a diverged branch with no open PR is
-// safe to recreate from main; with an open PR it requires human action.
-func ensureBranch(ctx context.Context, c gh.Client, branch, baseSHA string, hasOpenPR bool) *opError {
-	_, exists, err := c.GetRef(ctx, branch)
-	if err != nil {
-		return apiError(err)
-	}
-	if !exists {
-		if err := c.CreateRef(ctx, branch, baseSHA); err != nil && !gh.IsConflict(err) {
-			return apiError(err)
-		}
-		return nil
-	}
-	status, err := c.CompareCommits(ctx, gh.Base, branch)
-	if err != nil {
-		return apiError(err)
-	}
-	switch status {
-	case gh.StatusIdentical, gh.StatusAhead:
-		return nil
-	case gh.StatusBehind:
-		if err := c.UpdateRef(ctx, branch, baseSHA, false); err != nil {
-			return apiError(err)
-		}
-		return nil
-	case gh.StatusDiverged:
-		if hasOpenPR {
-			return &opError{
-				Code:    "branch_diverged",
-				Message: "branch " + branch + " has diverged from " + gh.Base + " and an open PR exists; rebase or close the PR before retrying",
-			}
-		}
-		if err := c.DeleteRef(ctx, branch); err != nil {
-			return apiError(err)
-		}
-		if err := c.CreateRef(ctx, branch, baseSHA); err != nil {
-			return apiError(err)
-		}
-		return nil
-	}
-	return apiError(errors.New("unknown branch state"))
-}
-
-// commitWithRetry handles 409/422 reconciliation. Returns ("", nil) when
-// a reconcile reveals the branch already matches (caller turns this into
-// a noop).
-func commitWithRetry(ctx context.Context, c gh.Client, path, branch, blobSHA string, rendered []byte, message string, openPR *gh.PullRequest) (string, *opError) {
-	commitSHA, err := c.CreateOrUpdateFile(ctx, path, branch, blobSHA, rendered, message)
-	if err == nil {
-		return commitSHA, nil
-	}
-	if !gh.IsConflict(err) {
-		return "", apiError(err)
-	}
-	current, freshSHA, _, gerr := c.GetFile(ctx, path, branch)
-	if gerr != nil {
-		return "", apiError(gerr)
-	}
-	if bytes.Equal(current, rendered) && openPR != nil {
-		return "", nil
-	}
-	commitSHA, err = c.CreateOrUpdateFile(ctx, path, branch, freshSHA, rendered, message)
-	if err != nil {
-		return "", &opError{Code: "github_conflict", Message: err.Error(), Retryable: true}
-	}
-	return commitSHA, nil
-}
-
-// createPRWithReconcile opens a new PR; if a 422 race shows a PR now
-// exists, returns it as "updated".
-func createPRWithReconcile(ctx context.Context, c gh.Client, branch string, team *spec.Team) (gh.PullRequest, string, *opError) {
-	title := "Update teams/" + team.TeamKey + ".tfvars"
-	body := prBody(team)
-	pr, err := c.CreatePR(ctx, branch, gh.Base, title, body)
-	if err == nil {
-		return pr, "created", nil
-	}
-	if !gh.IsConflict(err) {
-		return gh.PullRequest{}, "", apiError(err)
-	}
-	prs, lerr := c.ListOpenPRs(ctx, branch, gh.Base)
-	if lerr != nil {
-		return gh.PullRequest{}, "", apiError(lerr)
-	}
-	if len(prs) > 0 {
-		return prs[0], "updated", nil
-	}
-	return gh.PullRequest{}, "", apiError(err)
 }
 
 // prBody renders a deterministic high-level summary. The PR diff itself

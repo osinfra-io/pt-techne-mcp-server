@@ -90,6 +90,13 @@ func (f *fakeClient) GetFile(_ context.Context, path, ref string) ([]byte, strin
 }
 
 func (f *fakeClient) GetFileInRepo(_ context.Context, repo, path, ref string) ([]byte, string, bool, error) {
+	if repo == gh.Repo {
+		v, ok := f.files[path+"@"+ref]
+		if !ok {
+			return nil, "", false, nil
+		}
+		return []byte(v), "blob-" + v, true, nil
+	}
 	v, ok := f.repoFiles[repo+"/"+path+"@"+ref]
 	if !ok {
 		return nil, "", false, nil
@@ -152,9 +159,10 @@ func (f *fakeClient) CreatePR(_ context.Context, _, _, _, _ string) (gh.PullRequ
 	return pr, nil
 }
 
-// Cross-repo (*InRepo) surface. Tests for open_team_docs_pr drive these
-// directly; tests for open_team_pr never touch them, so the fake can
-// hold both surfaces without coupling.
+// Cross-repo (*InRepo) surface. When repo == gh.Repo the InRepo methods
+// route through the same stores as the non-InRepo methods so
+// open_team_pr tests work regardless of which call surface is used.
+// Other repos use the repoFiles/repoRefs/repoOpenPRs stores.
 
 func (f *fakeClient) ListDirInRepo(_ context.Context, repo, path, ref string) ([]string, bool, error) {
 	prefix := repo + "/" + path + "/"
@@ -180,24 +188,40 @@ func (f *fakeClient) ListDirInRepo(_ context.Context, repo, path, ref string) ([
 }
 
 func (f *fakeClient) GetRefInRepo(_ context.Context, repo, branch string) (string, bool, error) {
+	if repo == gh.Repo {
+		sha, ok := f.refs[branch]
+		return sha, ok, nil
+	}
 	sha, ok := f.repoRefs[repo+"/"+branch]
 	return sha, ok, nil
 }
 
 func (f *fakeClient) CreateRefInRepo(_ context.Context, repo, branch, fromSHA string) error {
 	f.created++
+	if repo == gh.Repo {
+		f.refs[branch] = fromSHA
+		return nil
+	}
 	f.repoRefs[repo+"/"+branch] = fromSHA
 	return nil
 }
 
 func (f *fakeClient) UpdateRefInRepo(_ context.Context, repo, branch, toSHA string, _ bool) error {
 	f.updated++
+	if repo == gh.Repo {
+		f.refs[branch] = toSHA
+		return nil
+	}
 	f.repoRefs[repo+"/"+branch] = toSHA
 	return nil
 }
 
 func (f *fakeClient) DeleteRefInRepo(_ context.Context, repo, branch string) error {
 	f.deleted++
+	if repo == gh.Repo {
+		delete(f.refs, branch)
+		return nil
+	}
 	delete(f.repoRefs, repo+"/"+branch)
 	return nil
 }
@@ -210,6 +234,18 @@ func (f *fakeClient) CompareCommitsInRepo(_ context.Context, _, _, _ string) (gh
 }
 
 func (f *fakeClient) CreateOrUpdateFileInRepo(_ context.Context, repo, path, branch, _ string, content []byte, _ string) (string, error) {
+	if repo == gh.Repo {
+		if f.commitConflictThenSucceed {
+			f.commitConflictThenSucceed = false
+			if f.commitConflictMatchesAfter {
+				f.files[path+"@"+branch] = string(content)
+			}
+			return "", fakeConflict()
+		}
+		f.committed++
+		f.files[path+"@"+branch] = string(content)
+		return "commit-sha-" + branch, nil
+	}
 	if f.commitConflictThenSucceed {
 		f.commitConflictThenSucceed = false
 		if f.commitConflictMatchesAfter {
@@ -223,10 +259,24 @@ func (f *fakeClient) CreateOrUpdateFileInRepo(_ context.Context, repo, path, bra
 }
 
 func (f *fakeClient) ListOpenPRsInRepo(_ context.Context, repo, _, _ string) ([]gh.PullRequest, error) {
+	if repo == gh.Repo {
+		return f.openPRs, nil
+	}
 	return f.repoOpenPRs[repo], nil
 }
 
 func (f *fakeClient) CreatePRInRepo(_ context.Context, repo, _, _, _, _ string) (gh.PullRequest, error) {
+	if repo == gh.Repo {
+		if f.createPRConflictThenSucceed {
+			f.createPRConflictThenSucceed = false
+			f.openPRs = []gh.PullRequest{{Number: 99, URL: "https://github.com/osinfra-io/" + repo + "/pull/99"}}
+			return gh.PullRequest{}, fakeConflict()
+		}
+		f.prsCreated++
+		pr := gh.PullRequest{Number: 100, URL: "https://github.com/osinfra-io/" + repo + "/pull/100"}
+		f.openPRs = []gh.PullRequest{pr}
+		return pr, nil
+	}
 	if f.createPRConflictThenSucceed {
 		f.createPRConflictThenSucceed = false
 		f.repoOpenPRs[repo] = []gh.PullRequest{{Number: 99, URL: "https://github.com/osinfra-io/" + repo + "/pull/99"}}

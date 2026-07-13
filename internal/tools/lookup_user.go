@@ -103,8 +103,7 @@ func LookupUser(s *mcp.Server, v *spec.Validator, c gh.Client) {
 		for _, t := range teams {
 			out.Matches = append(out.Matches, scanTeam(t, via, target)...)
 		}
-		dedupSortMatches(out.Matches)
-		out.Matches = dedupMatches(out.Matches)
+		out.Matches = sortAndDedup(out.Matches)
 		return nil, out, nil
 	})
 }
@@ -121,9 +120,17 @@ func scanTeam(t *spec.Team, via, target string) []LookupUserMatch {
 
 	if via == "email" {
 		// Datadog
-		out = append(out, scanDatadogMemberships(t.TeamKey, via, target,
-			[][]string{t.DatadogTeamMemberships.Admins, t.DatadogTeamMemberships.Members},
-			[]string{"admin", "member"}, "datadog", "team", "")...)
+		for _, m := range []struct {
+			list []string
+			role string
+		}{
+			{t.DatadogTeamMemberships.Admins, "admin"},
+			{t.DatadogTeamMemberships.Members, "member"},
+		} {
+			if containsCI(m.list, target) {
+				out = append(out, LookupUserMatch{TeamKey: t.TeamKey, Via: via, System: "datadog", Scope: "team", Membership: m.role})
+			}
+		}
 
 		// Google basic groups
 		for _, g := range []struct {
@@ -238,24 +245,7 @@ func containsCI(xs []string, target string) bool {
 	return false
 }
 
-// scanDatadogMemberships checks parallel lists of membership strings
-// against a target (case-insensitive) and returns structured matches.
-// Used for Datadog team membership where admins and members are email
-// lists rather than GitHub usernames.
-func scanDatadogMemberships(teamKey, via, target string, lists [][]string, labels []string, system, scope, subject string) []LookupUserMatch {
-	var out []LookupUserMatch
-	for i, list := range lists {
-		if containsCI(list, target) {
-			out = append(out, LookupUserMatch{
-				TeamKey: teamKey, Via: via,
-				System: system, Scope: scope, Subject: subject, Membership: labels[i],
-			})
-		}
-	}
-	return out
-}
-
-func dedupSortMatches(ms []LookupUserMatch) {
+func sortAndDedup(ms []LookupUserMatch) []LookupUserMatch {
 	sort.SliceStable(ms, func(i, j int) bool {
 		a, b := ms[i], ms[j]
 		if a.TeamKey != b.TeamKey {
@@ -272,12 +262,6 @@ func dedupSortMatches(ms []LookupUserMatch) {
 		}
 		return a.Membership < b.Membership
 	})
-}
-
-// dedupMatches drops exact duplicates (same team/system/scope/subject/
-// membership). A user listed twice in the same membership list does
-// not appear twice in the output.
-func dedupMatches(ms []LookupUserMatch) []LookupUserMatch {
 	out := ms[:0]
 	var prev LookupUserMatch
 	for i, m := range ms {

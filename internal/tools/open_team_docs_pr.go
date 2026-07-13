@@ -10,7 +10,6 @@ package tools
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -65,28 +64,12 @@ func OpenTeamDocsPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 		if c == nil {
 			return notConfigured("open_team_docs_pr"), nil, nil
 		}
-		specMap, err := coerceSpec(in.Spec)
-		if err != nil {
-			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
-		}
-		if errs := v.Validate(specMap); len(errs) > 0 {
-			body, merr := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
-			if merr != nil {
-				return nil, nil, fmt.Errorf("marshal validation errors: %w", merr)
-			}
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: string(body)}}}, nil, nil
+		team, errRes, err := specToTeam(v, in.Spec)
+		if errRes != nil || err != nil {
+			return errRes, nil, err
 		}
 
-		raw, err := json.Marshal(specMap)
-		if err != nil {
-			return nil, nil, fmt.Errorf("re-marshal spec: %w", err)
-		}
-		var team spec.Team
-		if err := json.Unmarshal(raw, &team); err != nil {
-			return nil, nil, fmt.Errorf("decode validated spec: %w", err)
-		}
-
-		indexRes, err := docs.Render(&team)
+		indexRes, err := docs.Render(team)
 		if err != nil {
 			return errResult(opError{Code: "docs_input_invalid", Message: err.Error()}), nil, nil
 		}
@@ -112,7 +95,7 @@ func OpenTeamDocsPR(s *mcp.Server, v *spec.Validator, c gh.Client) {
 		}
 		message := title + coAuthoredTrailer
 
-		out, opErr := openTeamDocsPR(ctx, c, &team, indexRes, section, folder, branch, title, message)
+		out, opErr := openTeamDocsPR(ctx, c, team, indexRes, section, folder, branch, title, message)
 		if opErr != nil {
 			return errResult(*opErr), nil, nil
 		}
@@ -239,7 +222,7 @@ func openTeamDocsPR(ctx context.Context, c gh.Client, team *spec.Team, indexRes 
 			IndexPath: indexRes.Path, SidebarsPath: sidebarsPath,
 		}, nil
 	}
-	pr, action, opErr := createDocsPRWithReconcile(ctx, c, repo, branch, title, team)
+	pr, action, opErr := createPRWithReconcileInRepo(ctx, c, repo, branch, title, docsPRBody(team))
 	if opErr != nil {
 		return nil, opErr
 	}
@@ -250,9 +233,10 @@ func openTeamDocsPR(ctx context.Context, c gh.Client, team *spec.Team, indexRes 
 	}, nil
 }
 
-// The remaining helpers mirror open_team_pr.go's findOpenPR /
-// ensureBranch / commitWithRetry / createPRWithReconcile but accept a
-// repo parameter and use the *InRepo client surface.
+// findOpenPRInRepo, ensureBranchInRepo, commitWithRetryInRepo, and
+// createPRWithReconcileInRepo are the canonical InRepo transaction helpers
+// used by all three PR-opening tools (open_team_pr, open_team_docs_pr,
+// open_team_helpers_pr).
 
 func findOpenPRInRepo(ctx context.Context, c gh.Client, repo, branch string) (*gh.PullRequest, error) {
 	prs, err := c.ListOpenPRsInRepo(ctx, repo, branch, gh.Base)
@@ -328,8 +312,7 @@ func commitWithRetryInRepo(ctx context.Context, c gh.Client, repo, path, branch,
 	return commitSHA, nil
 }
 
-func createDocsPRWithReconcile(ctx context.Context, c gh.Client, repo, branch, title string, team *spec.Team) (gh.PullRequest, string, *opError) {
-	body := docsPRBody(team)
+func createPRWithReconcileInRepo(ctx context.Context, c gh.Client, repo, branch, title, body string) (gh.PullRequest, string, *opError) {
 	pr, err := c.CreatePRInRepo(ctx, repo, branch, gh.Base, title, body)
 	if err == nil {
 		return pr, "created", nil
