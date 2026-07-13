@@ -9,8 +9,6 @@ package tools
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
@@ -39,26 +37,11 @@ func RenderTeamDocsIndex(s *mcp.Server, v *spec.Validator) {
 			ReadOnlyHint: true,
 		},
 	}, func(_ context.Context, _ *mcp.CallToolRequest, in RenderTeamDocsIndexInput) (*mcp.CallToolResult, *RenderTeamDocsIndexOutput, error) {
-		specMap, err := coerceSpec(in.Spec)
-		if err != nil {
-			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
+		team, errRes, err := specToTeam(v, in.Spec)
+		if errRes != nil || err != nil {
+			return errRes, nil, err
 		}
-		if errs := v.Validate(specMap); len(errs) > 0 {
-			body, merr := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
-			if merr != nil {
-				return nil, nil, fmt.Errorf("marshal validation errors: %w", merr)
-			}
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: string(body)}}}, nil, nil
-		}
-		raw, err := json.Marshal(specMap)
-		if err != nil {
-			return nil, nil, fmt.Errorf("re-marshal spec: %w", err)
-		}
-		var team spec.Team
-		if err := json.Unmarshal(raw, &team); err != nil {
-			return nil, nil, fmt.Errorf("decode validated spec: %w", err)
-		}
-		res, err := docs.Render(&team)
+		res, err := docs.Render(team)
 		if err != nil {
 			return errResult(opError{Code: "docs_input_invalid", Message: err.Error()}), nil, nil
 		}

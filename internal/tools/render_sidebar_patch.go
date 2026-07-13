@@ -8,7 +8,6 @@ package tools
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -40,28 +39,12 @@ func RenderTeamSidebarPatch(s *mcp.Server, v *spec.Validator) {
 			ReadOnlyHint: true,
 		},
 	}, func(_ context.Context, _ *mcp.CallToolRequest, in RenderTeamSidebarPatchInput) (*mcp.CallToolResult, *RenderTeamSidebarPatchOutput, error) {
-		specMap, err := coerceSpec(in.Spec)
-		if err != nil {
-			return errResult(opError{Code: "invalid_input", Message: err.Error()}), nil, nil
-		}
-		if errs := v.Validate(specMap); len(errs) > 0 {
-			body, merr := json.Marshal(ValidateOutput{Valid: false, Errors: errs})
-			if merr != nil {
-				return nil, nil, fmt.Errorf("marshal validation errors: %w", merr)
-			}
-			return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: string(body)}}}, nil, nil
+		team, errRes, err := specToTeam(v, in.Spec)
+		if errRes != nil || err != nil {
+			return errRes, nil, err
 		}
 		if in.CurrentSidebarsJS == "" {
 			return errResult(opError{Code: "invalid_input", Message: "current_sidebars_js is required"}), nil, nil
-		}
-
-		raw, err := json.Marshal(specMap)
-		if err != nil {
-			return nil, nil, fmt.Errorf("re-marshal spec: %w", err)
-		}
-		var team spec.Team
-		if err := json.Unmarshal(raw, &team); err != nil {
-			return nil, nil, fmt.Errorf("decode validated spec: %w", err)
 		}
 		section, err := docs.SectionFor(team.TeamType)
 		if err != nil {

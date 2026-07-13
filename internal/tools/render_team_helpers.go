@@ -54,35 +54,42 @@ func RenderTeamHelpers(s *mcp.Server, c gh.Client) {
 		if !teamKeyRe.MatchString(in.TeamKey) {
 			return errResult(opError{Code: "invalid_input", Message: "team_key must match ^(pt|st|ct|et)-[a-z][a-z0-9-]*[a-z0-9]$"}), nil, nil
 		}
-		workspace := in.TeamKey + "-main-production"
-
-		corpusBytes, _, corpusExists, err := c.GetFileInRepo(ctx, gh.RepoCorpus, "helpers.tofu", gh.Base)
-		if err != nil {
-			return errResult(*apiError(fmt.Errorf("pt-corpus/helpers.tofu@%s: %w", gh.Base, err))), nil, nil
+		corpusRendered, pneumaRendered, errRes := fetchBothHelpers(ctx, c, in.TeamKey+"-main-production")
+		if errRes != nil {
+			return errRes, nil, nil
 		}
-		if !corpusExists {
-			return errResult(opError{Code: "source_parse_error", Message: "helpers.tofu missing at pt-corpus@" + gh.Base}), nil, nil
-		}
-		corpusRendered, rerr := helpersrender.Render(corpusBytes, workspace)
-		if rerr != nil {
-			return errResult(opError{Code: "source_parse_error", Message: "pt-corpus/helpers.tofu: " + rerr.Error()}), nil, nil
-		}
-
-		pneumaBytes, _, pneumaExists, err := c.GetFileInRepo(ctx, gh.RepoPneuma, "shared/helpers.tofu", gh.Base)
-		if err != nil {
-			return errResult(*apiError(fmt.Errorf("pt-pneuma/shared/helpers.tofu@%s: %w", gh.Base, err))), nil, nil
-		}
-		if !pneumaExists {
-			return errResult(opError{Code: "source_parse_error", Message: "shared/helpers.tofu missing at pt-pneuma@" + gh.Base}), nil, nil
-		}
-		pneumaRendered, rerr := helpersrender.Render(pneumaBytes, workspace)
-		if rerr != nil {
-			return errResult(opError{Code: "source_parse_error", Message: "pt-pneuma/shared/helpers.tofu: " + rerr.Error()}), nil, nil
-		}
-
 		return nil, &RenderTeamHelpersOutput{
 			Corpus: RenderTeamHelpersResult{HelpersTofu: string(corpusRendered)},
 			Pneuma: RenderTeamHelpersResult{HelpersTofu: string(pneumaRendered)},
 		}, nil
 	})
+}
+
+// fetchBothHelpers fetches and renders helpers.tofu from pt-corpus and pt-pneuma
+// for the given workspace. Returns a non-nil errRes on any failure.
+func fetchBothHelpers(ctx context.Context, c gh.Client, workspace string) (corpusRendered, pneumaRendered []byte, errRes *mcp.CallToolResult) {
+	corpusBytes, _, corpusExists, err := c.GetFileInRepo(ctx, gh.RepoCorpus, "helpers.tofu", gh.Base)
+	if err != nil {
+		return nil, nil, errResult(*apiError(fmt.Errorf("pt-corpus/helpers.tofu@%s: %w", gh.Base, err)))
+	}
+	if !corpusExists {
+		return nil, nil, errResult(opError{Code: "source_parse_error", Message: "helpers.tofu missing at pt-corpus@" + gh.Base})
+	}
+	cr, rerr := helpersrender.Render(corpusBytes, workspace)
+	if rerr != nil {
+		return nil, nil, errResult(opError{Code: "source_parse_error", Message: "pt-corpus/helpers.tofu: " + rerr.Error()})
+	}
+
+	pneumaBytes, _, pneumaExists, err := c.GetFileInRepo(ctx, gh.RepoPneuma, "shared/helpers.tofu", gh.Base)
+	if err != nil {
+		return nil, nil, errResult(*apiError(fmt.Errorf("pt-pneuma/shared/helpers.tofu@%s: %w", gh.Base, err)))
+	}
+	if !pneumaExists {
+		return nil, nil, errResult(opError{Code: "source_parse_error", Message: "shared/helpers.tofu missing at pt-pneuma@" + gh.Base})
+	}
+	pr, rerr := helpersrender.Render(pneumaBytes, workspace)
+	if rerr != nil {
+		return nil, nil, errResult(opError{Code: "source_parse_error", Message: "pt-pneuma/shared/helpers.tofu: " + rerr.Error()})
+	}
+	return cr, pr, nil
 }
