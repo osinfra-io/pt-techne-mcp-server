@@ -159,9 +159,9 @@ teams = {
       "devex"        = { color = "84A255", description = "Developer experience, tooling, and local environment" }
       "docs"         = { color = "0052CC", description = "Docusaurus documentation site or other markdown documentation" }
       "nomos"        = { color = "FFB400", description = "Created by the Nomos agent" }
+      "opentofu"     = { color = "FEDA15", description = "OpenTofu infrastructure code" }
       "scripts"      = { color = "FBCA04", description = "Generator and utility scripts" }
       "security"     = { color = "B60205", description = "Driven by security requirements or hardening" }
-      "tofu"         = { color = "FEDA15", description = "OpenTofu infrastructure code" }
     }
 
     google_basic_groups_env_memberships = {

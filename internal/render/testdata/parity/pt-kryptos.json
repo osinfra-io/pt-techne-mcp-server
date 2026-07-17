@@ -261,7 +261,7 @@
             "color": "B60205",
             "description": "Driven by security requirements or hardening"
         },
-        "tofu": {
+        "opentofu": {
             "color": "FEDA15",
             "description": "OpenTofu infrastructure code"
         }
