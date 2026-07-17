@@ -67,10 +67,10 @@ func TestRenderIncludesKubernetesNamespaces(t *testing.T) {
   "datadog_team_memberships": { "admins": [], "members": [] },
   "display_name": "Pt Kryptos",
   "github_parent_team_memberships": { "maintainers": [], "members": [] },
-  "google_basic_groups_memberships": {
-    "admin": { "managers": [], "members": [], "owners": [] },
-    "reader": { "managers": [], "members": [], "owners": [] },
-    "writer": { "managers": [], "members": [], "owners": [] }
+  "google_basic_groups_env_memberships": {
+    "admin":  { "non-production": {"managers": [], "members": [], "owners": []}, "production": {"managers": [], "members": [], "owners": []}, "sandbox": {"managers": [], "members": [], "owners": []} },
+    "reader": { "non-production": {"managers": [], "members": [], "owners": []}, "production": {"managers": [], "members": [], "owners": []}, "sandbox": {"managers": [], "members": [], "owners": []} },
+    "writer": { "non-production": {"managers": [], "members": [], "owners": []}, "production": {"managers": [], "members": [], "owners": []}, "sandbox": {"managers": [], "members": [], "owners": []} }
   },
   "platform_managed_project": {
     "kubernetes_engine": {
@@ -129,10 +129,10 @@ func TestRenderNamespaceKeysAreQuoted(t *testing.T) {
   "datadog_team_memberships": { "admins": [], "members": [] },
   "display_name": "Pt Kryptos",
   "github_parent_team_memberships": { "maintainers": [], "members": [] },
-  "google_basic_groups_memberships": {
-    "admin": { "managers": [], "members": [], "owners": [] },
-    "reader": { "managers": [], "members": [], "owners": [] },
-    "writer": { "managers": [], "members": [], "owners": [] }
+  "google_basic_groups_env_memberships": {
+    "admin":  { "non-production": {"managers": [], "members": [], "owners": []}, "production": {"managers": [], "members": [], "owners": []}, "sandbox": {"managers": [], "members": [], "owners": []} },
+    "reader": { "non-production": {"managers": [], "members": [], "owners": []}, "production": {"managers": [], "members": [], "owners": []}, "sandbox": {"managers": [], "members": [], "owners": []} },
+    "writer": { "non-production": {"managers": [], "members": [], "owners": []}, "production": {"managers": [], "members": [], "owners": []}, "sandbox": {"managers": [], "members": [], "owners": []} }
   },
   "platform_managed_project": {
     "kubernetes_engine": {

@@ -16,10 +16,22 @@ func minimalValid() string {
 		"display_name": "Example",
 		"display_name_comment": "An example team used in tests.",
 		"github_parent_team_memberships": {"maintainers": ["x"], "members": []},
-		"google_basic_groups_memberships": {
-			"admin":  {"managers": [], "members": [], "owners": ["a@b.com"]},
-			"reader": {"managers": [], "members": [], "owners": ["a@b.com"]},
-			"writer": {"managers": [], "members": [], "owners": ["a@b.com"]}
+		"google_basic_groups_env_memberships": {
+			"admin": {
+				"non-production": {"managers": [], "members": [], "owners": ["a@b.com"]},
+				"production":     {"managers": [], "members": [], "owners": ["a@b.com"]},
+				"sandbox":        {"managers": [], "members": [], "owners": ["a@b.com"]}
+			},
+			"reader": {
+				"non-production": {"managers": [], "members": [], "owners": ["a@b.com"]},
+				"production":     {"managers": [], "members": [], "owners": ["a@b.com"]},
+				"sandbox":        {"managers": [], "members": [], "owners": ["a@b.com"]}
+			},
+			"writer": {
+				"non-production": {"managers": [], "members": [], "owners": ["a@b.com"]},
+				"production":     {"managers": [], "members": [], "owners": ["a@b.com"]},
+				"sandbox":        {"managers": [], "members": [], "owners": ["a@b.com"]}
+			}
 		},
 		"team_type": "platform-team"
 	}`

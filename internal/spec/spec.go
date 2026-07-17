@@ -16,7 +16,7 @@ type Team struct {
 	GitHubChildTeamsMemberships   map[string]GitHubMembership  `json:"github_child_teams_memberships,omitempty"`
 	GitHubParentTeamMemberships   GitHubMembership             `json:"github_parent_team_memberships"`
 	GitHubRepositories            map[string]GitHubRepository  `json:"github_repositories,omitempty"`
-	GoogleBasicGroupsMemberships  GoogleBasicGroupsMemberships `json:"google_basic_groups_memberships"`
+	GoogleBasicGroupsEnvMemberships GoogleBasicGroupsEnvMemberships `json:"google_basic_groups_env_memberships"`
 	GoogleBrowserGroups           *EnvScopedGoogleGroups       `json:"google_browser_groups_memberships,omitempty"`
 	GoogleProjectCreatorGroups    *EnvScopedGoogleGroups       `json:"google_project_creator_groups_memberships,omitempty"`
 	GoogleProjectEnableDatadog    *bool                        `json:"google_project_enable_datadog,omitempty"`
@@ -42,10 +42,10 @@ type GoogleGroup struct {
 	Owners   []string `json:"owners"`
 }
 
-type GoogleBasicGroupsMemberships struct {
-	Admin  GoogleGroup `json:"admin"`
-	Reader GoogleGroup `json:"reader"`
-	Writer GoogleGroup `json:"writer"`
+type GoogleBasicGroupsEnvMemberships struct {
+	Admin  EnvScopedGoogleGroups `json:"admin"`
+	Reader EnvScopedGoogleGroups `json:"reader"`
+	Writer EnvScopedGoogleGroups `json:"writer"`
 }
 
 type EnvScopedGoogleGroups struct {
