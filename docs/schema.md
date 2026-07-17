@@ -68,9 +68,9 @@ GitHub repositories owned by this team. Key is the repository name. Each reposit
 - **type:** `object`
 - **required:** false
 
-## `google_basic_groups_memberships`
+## `google_basic_groups_env_memberships`
 
-Google Cloud Identity basic groups: admin, reader, writer.
+Per-environment Google Cloud Identity basic groups: admin, reader, writer. Binds each role directly to environment folders — no team-folder binding, no inheritance. Allows finer-grained access control than team-level groups (e.g. write in sandbox/non-production, read-only in production).
 
 - **type:** `object`
 - **required:** true

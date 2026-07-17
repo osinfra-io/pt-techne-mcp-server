@@ -1,7 +1,9 @@
 {
   "team_key": "st-ethos",
   "datadog_team_memberships": {
-    "admins": ["brett@osinfra.io"],
+    "admins": [
+      "brett@osinfra.io"
+    ],
     "members": []
   },
   "display_name": "Ethos",
@@ -10,10 +12,58 @@
     "maintainers": [],
     "members": []
   },
-  "google_basic_groups_memberships": {
-    "admin":  { "managers": [], "members": [], "owners": [] },
-    "reader": { "managers": [], "members": [], "owners": [] },
-    "writer": { "managers": [], "members": [], "owners": [] }
-  },
-  "team_type": "stream-aligned-team"
+  "team_type": "stream-aligned-team",
+  "google_basic_groups_env_memberships": {
+    "admin": {
+      "non-production": {
+        "managers": [],
+        "members": [],
+        "owners": []
+      },
+      "production": {
+        "managers": [],
+        "members": [],
+        "owners": []
+      },
+      "sandbox": {
+        "managers": [],
+        "members": [],
+        "owners": []
+      }
+    },
+    "reader": {
+      "non-production": {
+        "managers": [],
+        "members": [],
+        "owners": []
+      },
+      "production": {
+        "managers": [],
+        "members": [],
+        "owners": []
+      },
+      "sandbox": {
+        "managers": [],
+        "members": [],
+        "owners": []
+      }
+    },
+    "writer": {
+      "non-production": {
+        "managers": [],
+        "members": [],
+        "owners": []
+      },
+      "production": {
+        "managers": [],
+        "members": [],
+        "owners": []
+      },
+      "sandbox": {
+        "managers": [],
+        "members": [],
+        "owners": []
+      }
+    }
+  }
 }

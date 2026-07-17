@@ -132,17 +132,26 @@ func scanTeam(t *spec.Team, via, target string) []LookupUserMatch {
 			}
 		}
 
-		// Google basic groups
+		// Google basic groups (per environment)
 		for _, g := range []struct {
-			subject string
-			grp     spec.GoogleGroup
+			role string
+			grp  spec.EnvScopedGoogleGroups
 		}{
-			{"admin", t.GoogleBasicGroupsMemberships.Admin},
-			{"reader", t.GoogleBasicGroupsMemberships.Reader},
-			{"writer", t.GoogleBasicGroupsMemberships.Writer},
+			{"admin", t.GoogleBasicGroupsEnvMemberships.Admin},
+			{"reader", t.GoogleBasicGroupsEnvMemberships.Reader},
+			{"writer", t.GoogleBasicGroupsEnvMemberships.Writer},
 		} {
-			for _, m := range matchGoogleGroup(g.grp, target) {
-				add(LookupUserMatch{System: "google", Scope: "basic", Subject: g.subject, Membership: m})
+			for _, env := range []struct {
+				name string
+				grp  spec.GoogleGroup
+			}{
+				{"sandbox", g.grp.Sandbox},
+				{"non-production", g.grp.NonProduction},
+				{"production", g.grp.Production},
+			} {
+				for _, m := range matchGoogleGroup(env.grp, target) {
+					add(LookupUserMatch{System: "google", Scope: "basic", Subject: g.role + "/" + env.name, Membership: m})
+				}
 			}
 		}
 

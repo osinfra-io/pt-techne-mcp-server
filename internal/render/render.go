@@ -90,7 +90,7 @@ func emitTeamBody(w *writer, t *spec.Team) {
 		emit(func() { emitGitHubRepositories(w, t.GitHubRepositories) })
 	}
 
-	emit(func() { emitGoogleBasicGroups(w, t.GoogleBasicGroupsMemberships) })
+	emit(func() { emitGoogleBasicGroupsEnv(w, t.GoogleBasicGroupsEnvMemberships) })
 
 	if t.GoogleBrowserGroups != nil {
 		emit(func() { emitEnvScopedGroups(w, "google_browser_groups_memberships", *t.GoogleBrowserGroups) })
@@ -293,12 +293,13 @@ func emitPages(w *writer, p spec.GitHubPages) {
 	w.line("}")
 }
 
-func emitGoogleBasicGroups(w *writer, g spec.GoogleBasicGroupsMemberships) {
-	w.line("google_basic_groups_memberships = {")
+func emitGoogleBasicGroupsEnv(w *writer, g spec.GoogleBasicGroupsEnvMemberships) {
+	w.line("google_basic_groups_env_memberships = {")
 	w.indent += 2
-	emitGoogleGroupNamed(w, "admin", g.Admin)
-	emitGoogleGroupNamed(w, "reader", g.Reader)
-	emitGoogleGroupNamed(w, "writer", g.Writer)
+	// Order: admin, reader, writer (alphabetical).
+	emitEnvScopedGroups(w, "admin", g.Admin)
+	emitEnvScopedGroups(w, "reader", g.Reader)
+	emitEnvScopedGroups(w, "writer", g.Writer)
 	w.indent -= 2
 	w.line("}")
 }

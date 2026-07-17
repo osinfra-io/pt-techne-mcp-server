@@ -23,10 +23,22 @@ func validSpec() map[string]any {
 		"github_parent_team_memberships": map[string]any{
 			"maintainers": []string{"x"}, "members": []string{},
 		},
-		"google_basic_groups_memberships": map[string]any{
-			"admin":  map[string]any{"managers": []string{}, "members": []string{}, "owners": []string{"a@b.com"}},
-			"reader": map[string]any{"managers": []string{}, "members": []string{}, "owners": []string{"a@b.com"}},
-			"writer": map[string]any{"managers": []string{}, "members": []string{}, "owners": []string{"a@b.com"}},
+		"google_basic_groups_env_memberships": map[string]any{
+			"admin": map[string]any{
+				"non-production": map[string]any{"managers": []string{}, "members": []string{}, "owners": []string{"a@b.com"}},
+				"production":     map[string]any{"managers": []string{}, "members": []string{}, "owners": []string{"a@b.com"}},
+				"sandbox":        map[string]any{"managers": []string{}, "members": []string{}, "owners": []string{"a@b.com"}},
+			},
+			"reader": map[string]any{
+				"non-production": map[string]any{"managers": []string{}, "members": []string{}, "owners": []string{"a@b.com"}},
+				"production":     map[string]any{"managers": []string{}, "members": []string{}, "owners": []string{"a@b.com"}},
+				"sandbox":        map[string]any{"managers": []string{}, "members": []string{}, "owners": []string{"a@b.com"}},
+			},
+			"writer": map[string]any{
+				"non-production": map[string]any{"managers": []string{}, "members": []string{}, "owners": []string{"a@b.com"}},
+				"production":     map[string]any{"managers": []string{}, "members": []string{}, "owners": []string{"a@b.com"}},
+				"sandbox":        map[string]any{"managers": []string{}, "members": []string{}, "owners": []string{"a@b.com"}},
+			},
 		},
 		"team_type": "platform-team",
 	}
