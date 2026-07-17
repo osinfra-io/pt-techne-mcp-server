@@ -90,6 +90,10 @@ func emitTeamBody(w *writer, t *spec.Team) {
 		emit(func() { emitGitHubRepositories(w, t.GitHubRepositories) })
 	}
 
+	if len(t.GitHubRepositoryLabels) > 0 {
+		emit(func() { emitGitHubRepositoryLabels(w, t.GitHubRepositoryLabels) })
+	}
+
 	emit(func() { emitGoogleBasicGroupsEnv(w, t.GoogleBasicGroupsEnvMemberships) })
 
 	if t.GoogleBrowserGroups != nil {
@@ -194,6 +198,26 @@ func emitGitHubRepositories(w *writer, repos map[string]spec.GitHubRepository) {
 		w.line("}")
 		w.indent -= 2
 	}
+	w.line("}")
+}
+
+func emitGitHubRepositoryLabels(w *writer, labels map[string]spec.GitHubRepositoryLabel) {
+	w.line("github_repository_labels = {")
+	keys := sortedKeys(labels)
+	maxLen := 0
+	for _, k := range keys {
+		if qlen := len(quote(k)); qlen > maxLen {
+			maxLen = qlen
+		}
+	}
+	w.indent += 2
+	for _, k := range keys {
+		qk := quote(k)
+		pad := strings.Repeat(" ", maxLen-len(qk))
+		l := labels[k]
+		w.line(fmt.Sprintf("%s%s = { color = %s, description = %s }", qk, pad, quote(l.Color), quote(l.Description)))
+	}
+	w.indent -= 2
 	w.line("}")
 }
 

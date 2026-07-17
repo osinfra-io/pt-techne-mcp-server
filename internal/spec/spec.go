@@ -16,6 +16,7 @@ type Team struct {
 	GitHubChildTeamsMemberships   map[string]GitHubMembership  `json:"github_child_teams_memberships,omitempty"`
 	GitHubParentTeamMemberships   GitHubMembership             `json:"github_parent_team_memberships"`
 	GitHubRepositories            map[string]GitHubRepository  `json:"github_repositories,omitempty"`
+	GitHubRepositoryLabels        map[string]GitHubRepositoryLabel `json:"github_repository_labels,omitempty"`
 	GoogleBasicGroupsEnvMemberships GoogleBasicGroupsEnvMemberships `json:"google_basic_groups_env_memberships"`
 	GoogleBrowserGroups           *EnvScopedGoogleGroups       `json:"google_browser_groups_memberships,omitempty"`
 	GoogleProjectCreatorGroups    *EnvScopedGoogleGroups       `json:"google_project_creator_groups_memberships,omitempty"`
@@ -63,6 +64,11 @@ type GitHubRepository struct {
 	Environments                  map[string]GitHubEnvironment `json:"environments,omitempty"`
 	Pages                         *GitHubPages                 `json:"pages,omitempty"`
 	Topics                        []string                     `json:"topics"`
+}
+
+type GitHubRepositoryLabel struct {
+	Color       string `json:"color"`
+	Description string `json:"description"`
 }
 
 type GitHubEnvironment struct {
