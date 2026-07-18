@@ -819,6 +819,7 @@ teams = {
     }
 
     github_repository_labels = {
+      "ci"           = { color = "0075CA", description = "Continuous integration and delivery" }
       "copilot"      = { color = "6E40C9", description = "Copilot instructions, skills, hooks, and agents" }
       "dependencies" = { color = "0075CA", description = "Pull requests that update a dependency file" }
       "devex"        = { color = "84A255", description = "Developer experience, tooling, and local environment" }

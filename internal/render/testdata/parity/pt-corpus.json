@@ -313,6 +313,10 @@
         "opentofu": {
             "color": "FEDA15",
             "description": "OpenTofu infrastructure code"
+        },
+        "ci": {
+            "color": "0075CA",
+            "description": "Continuous integration and delivery"
         }
     }
 }
