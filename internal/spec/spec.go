@@ -115,6 +115,7 @@ type KubernetesEngine struct {
 	EnableDatadogAPM       *bool                   `json:"enable_datadog_apm,omitempty"`
 	Locations              map[string]GKELocation  `json:"locations"`
 	Namespaces             map[string]GKENamespace `json:"namespaces,omitempty"`
+	RoutePrefix            string                  `json:"route_prefix,omitempty"`
 }
 
 type GKENamespace struct {

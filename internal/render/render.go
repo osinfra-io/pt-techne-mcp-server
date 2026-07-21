@@ -413,13 +413,16 @@ func emitKubernetesEngine(w *writer, k spec.KubernetesEngine) {
 		})
 	}
 
-	// dns_subdomain + enable_datadog_apm aligned
+	// dns_subdomain + enable_datadog_apm + route_prefix aligned
 	var rows [][2]string
 	if k.DNSSubdomain != "" {
 		rows = append(rows, [2]string{"dns_subdomain", quote(k.DNSSubdomain)})
 	}
 	if k.EnableDatadogAPM != nil {
 		rows = append(rows, [2]string{"enable_datadog_apm", boolStr(*k.EnableDatadogAPM)})
+	}
+	if k.RoutePrefix != "" {
+		rows = append(rows, [2]string{"route_prefix", quote(k.RoutePrefix)})
 	}
 	if len(rows) > 0 {
 		em(func() { w.alignedTop(rows) })
