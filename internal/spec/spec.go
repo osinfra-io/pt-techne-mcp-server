@@ -6,25 +6,25 @@ package spec
 
 // Team is a single team's full configuration.
 type Team struct {
-	TeamKey                       string                       `json:"team_key"`
-	DatadogTeamMemberships        DatadogTeamMemberships       `json:"datadog_team_memberships"`
-	DisplayName                   string                       `json:"display_name"`
-	DisplayNameComment            string                       `json:"display_name_comment,omitempty"`
-	EnableGoogleProject           *bool                        `json:"enable_google_project,omitempty"`
-	EnableOpenTofuStateManagement *bool                        `json:"enable_opentofu_state_management,omitempty"`
-	EnableWorkflows               *bool                        `json:"enable_workflows,omitempty"`
-	GitHubChildTeamsMemberships   map[string]GitHubMembership  `json:"github_child_teams_memberships,omitempty"`
-	GitHubParentTeamMemberships   GitHubMembership             `json:"github_parent_team_memberships"`
-	GitHubRepositories            map[string]GitHubRepository  `json:"github_repositories,omitempty"`
-	GitHubRepositoryLabels        map[string]GitHubRepositoryLabel `json:"github_repository_labels,omitempty"`
-	GoogleBasicGroupsEnvMemberships GoogleBasicGroupsEnvMemberships `json:"google_basic_groups_env_memberships"`
-	GoogleBrowserGroups           *EnvScopedGoogleGroups       `json:"google_browser_groups_memberships,omitempty"`
-	GoogleProjectCreatorGroups    *EnvScopedGoogleGroups       `json:"google_project_creator_groups_memberships,omitempty"`
-	GoogleProjectEnableDatadog    *bool                        `json:"google_project_enable_datadog,omitempty"`
-	GoogleProjectServices         []string                     `json:"google_project_services,omitempty"`
-	GoogleXPNAdminGroups          *EnvScopedGoogleGroups       `json:"google_xpn_admin_groups_memberships,omitempty"`
-	PlatformManagedProject        *PlatformManagedProject      `json:"platform_managed_project,omitempty"`
-	TeamType                      string                       `json:"team_type"`
+	TeamKey                         string                           `json:"team_key"`
+	DatadogTeamMemberships          DatadogTeamMemberships           `json:"datadog_team_memberships"`
+	DisplayName                     string                           `json:"display_name"`
+	DisplayNameComment              string                           `json:"display_name_comment,omitempty"`
+	EnableGoogleProject             *bool                            `json:"enable_google_project,omitempty"`
+	EnableOpenTofuStateManagement   *bool                            `json:"enable_opentofu_state_management,omitempty"`
+	EnableWorkflows                 *bool                            `json:"enable_workflows,omitempty"`
+	GitHubChildTeamsMemberships     map[string]GitHubMembership      `json:"github_child_teams_memberships,omitempty"`
+	GitHubParentTeamMemberships     GitHubMembership                 `json:"github_parent_team_memberships"`
+	GitHubRepositories              map[string]GitHubRepository      `json:"github_repositories,omitempty"`
+	GitHubRepositoryLabels          map[string]GitHubRepositoryLabel `json:"github_repository_labels,omitempty"`
+	GoogleBasicGroupsEnvMemberships GoogleBasicGroupsEnvMemberships  `json:"google_basic_groups_env_memberships"`
+	GoogleBrowserGroups             *EnvScopedGoogleGroups           `json:"google_browser_groups_memberships,omitempty"`
+	GoogleProjectCreatorGroups      *EnvScopedGoogleGroups           `json:"google_project_creator_groups_memberships,omitempty"`
+	GoogleProjectEnableDatadog      *bool                            `json:"google_project_enable_datadog,omitempty"`
+	GoogleProjectServices           []string                         `json:"google_project_services,omitempty"`
+	GoogleXPNAdminGroups            *EnvScopedGoogleGroups           `json:"google_xpn_admin_groups_memberships,omitempty"`
+	PlatformManagedProject          *PlatformManagedProject          `json:"platform_managed_project,omitempty"`
+	TeamType                        string                           `json:"team_type"`
 }
 
 type DatadogTeamMemberships struct {
@@ -118,7 +118,14 @@ type KubernetesEngine struct {
 }
 
 type GKENamespace struct {
-	IstioInjection string `json:"istio_injection,omitempty"`
+	IstioInjection string              `json:"istio_injection,omitempty"`
+	Routes         map[string]GKERoute `json:"routes,omitempty"`
+}
+
+type GKERoute struct {
+	Path    string `json:"path,omitempty"`
+	Port    int    `json:"port"`
+	Service string `json:"service"`
 }
 
 type ArtifactRegistryGroups struct {
