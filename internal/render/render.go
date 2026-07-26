@@ -509,6 +509,38 @@ func emitGKENamespaceBody(w *writer, ns spec.GKENamespace) {
 	if ns.IstioInjection != "" {
 		w.line("istio_injection = " + quote(ns.IstioInjection))
 	}
+	if len(ns.Routes) > 0 {
+		if ns.IstioInjection != "" {
+			w.blank()
+		}
+		emitGKERoutes(w, ns.Routes)
+	}
+}
+
+func emitGKERoutes(w *writer, routes map[string]spec.GKERoute) {
+	w.line("routes = {")
+	keys := sortedKeys(routes)
+	for i, k := range keys {
+		if i > 0 {
+			w.blank()
+		}
+		w.indent += 2
+		w.line(quote(k) + " = {")
+		w.indent += 2
+		emitGKERouteBody(w, routes[k])
+		w.indent -= 2
+		w.line("}")
+		w.indent -= 2
+	}
+	w.line("}")
+}
+
+func emitGKERouteBody(w *writer, r spec.GKERoute) {
+	if r.Path != "" {
+		w.line("path = " + quote(r.Path))
+	}
+	w.line("port = " + fmt.Sprintf("%d", r.Port))
+	w.line("service = " + quote(r.Service))
 }
 
 // nested returns a fresh writer at +2 indent for collecting block bodies before

@@ -92,6 +92,16 @@ func TestRenderIncludesKubernetesNamespaces(t *testing.T) {
         }
       },
       "namespaces": {
+        "istio-test": {
+          "istio_injection": "enabled",
+          "routes": {
+            "istio-test": {
+              "path": "/istio-test",
+              "port": 8080,
+              "service": "istio-test"
+            }
+          }
+        },
         "openbao": {
           "istio_injection": "disabled"
         }
@@ -119,6 +129,18 @@ func TestRenderIncludesKubernetesNamespaces(t *testing.T) {
 	}
 	if !strings.Contains(out, `istio_injection = "disabled"`) {
 		t.Fatalf("render output missing istio_injection field:\n%s", out)
+	}
+	if !strings.Contains(out, "routes = {") {
+		t.Fatalf("render output missing routes block:\n%s", out)
+	}
+	if !strings.Contains(out, `path = "/istio-test"`) {
+		t.Fatalf("render output missing route path field:\n%s", out)
+	}
+	if !strings.Contains(out, "port = 8080") {
+		t.Fatalf("render output missing route port field:\n%s", out)
+	}
+	if !strings.Contains(out, `service = "istio-test"`) {
+		t.Fatalf("render output missing route service field:\n%s", out)
 	}
 }
 
