@@ -111,6 +111,303 @@ func TestValidateJSON_BadJSON(t *testing.T) {
 	}
 }
 
+func TestValidateRouteAuthPolicies(t *testing.T) {
+	v := newValidator(t)
+
+	tests := []struct {
+		name        string
+		namespace   string
+		valid       bool
+		wantPath    string
+		wantMessage string
+	}{
+		{
+			name: "valid-required-group",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"public_paths": ["/app/healthz"],
+						"required_groups": ["group@example.com"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			valid: true,
+		},
+		{
+			name: "valid-disabled",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"enforced": false
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			valid: true,
+		},
+		{
+			name: "mesh-disabled",
+			namespace: `"app": {
+				"istio_injection": "disabled",
+				"route_auth_policies": {
+					"app": {
+						"required_groups": ["group@example.com"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/route_auth_policies",
+			wantMessage: "enabled",
+		},
+		{
+			name: "unknown-route-key",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"missing": {
+						"required_groups": ["group@example.com"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/route_auth_policies/missing",
+			wantMessage: "existing route",
+		},
+		{
+			name: "enforced-without-principal",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"public_paths": ["/app/healthz"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/route_auth_policies/app",
+			wantMessage: "required_groups or required_roles",
+		},
+		{
+			name: "disabled-with-fields",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"enforced": false,
+						"required_roles": ["admin"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/route_auth_policies/app/required_roles",
+			wantMessage: "disabled",
+		},
+		{
+			name: "public-path-outside-route-prefix",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"public_paths": ["/other/healthz"],
+						"required_groups": ["group@example.com"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/route_auth_policies/app/public_paths/0",
+			wantMessage: "route path prefix",
+		},
+		{
+			name: "non-rfc1123-key",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"App": {
+						"required_groups": ["group@example.com"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "",
+			wantMessage: "pattern",
+		},
+		{
+			name: "duplicate-public-paths",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"public_paths": ["/app/healthz", "/app/healthz"],
+						"required_groups": ["group@example.com"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/public_paths",
+			wantMessage: "equal",
+		},
+		{
+			name: "whitespace-required-group",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"required_groups": ["bad group"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/required_groups",
+			wantMessage: "pattern",
+		},
+		{
+			name: "duplicate-required-roles",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"required_roles": ["admin", "admin"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/required_roles",
+			wantMessage: "equal",
+		},
+		{
+			name: "whitespace-required-role",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"required_roles": ["bad role"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/required_roles",
+			wantMessage: "pattern",
+		},
+		{
+			name: "bad-public-path",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"public_paths": ["/"],
+						"required_groups": ["group@example.com"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/public_paths",
+			wantMessage: "not",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			errs, err := v.ValidateJSON([]byte(withNamespace(tc.namespace)))
+			if err != nil {
+				t.Fatalf("ValidateJSON: %v", err)
+			}
+			if tc.valid && len(errs) > 0 {
+				t.Fatalf("expected valid, got errors: %+v", errs)
+			}
+			if !tc.valid && len(errs) == 0 {
+				t.Fatalf("expected invalid, got no errors")
+			}
+			if tc.wantPath != "" && !errPathContains(errs, tc.wantPath) {
+				t.Fatalf("expected error path containing %q, got %+v", tc.wantPath, errs)
+			}
+			if tc.wantMessage != "" && !errMessageContains(errs, tc.wantMessage) {
+				t.Fatalf("expected error message containing %q, got %+v", tc.wantMessage, errs)
+			}
+		})
+	}
+}
+
 func errPathContains(errs []spec.ValidationError, want string) bool {
 	for _, e := range errs {
 		if strings.Contains(e.Path, want) {
@@ -118,4 +415,41 @@ func errPathContains(errs []spec.ValidationError, want string) bool {
 		}
 	}
 	return false
+}
+
+func errMessageContains(errs []spec.ValidationError, want string) bool {
+	for _, e := range errs {
+		if strings.Contains(e.Message, want) {
+			return true
+		}
+	}
+	return false
+}
+
+func withNamespace(namespace string) string {
+	return strings.Replace(minimalValid(), `"team_type": "platform-team"`, `"platform_managed_project": {
+			"kubernetes_engine": {
+				"locations": {
+					"us-east1-b": {
+						"node_pools": {
+							"default-pool": {
+								"machine_type": "e2-standard-2",
+								"max_node_count": 3,
+								"min_node_count": 1
+							}
+						},
+						"subnet": {
+							"ip_cidr_range": "10.60.96.0/20",
+							"master_ipv4_cidr_block": "10.63.192.96/28",
+							"pod_ip_cidr_range": "10.12.0.0/15",
+							"services_ip_cidr_range": "10.62.64.0/20"
+						}
+					}
+				},
+				"namespaces": {
+					`+namespace+`
+				}
+			}
+		},
+		"team_type": "platform-team"`, 1)
 }

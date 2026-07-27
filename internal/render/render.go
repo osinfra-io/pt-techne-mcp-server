@@ -509,11 +509,59 @@ func emitGKENamespaceBody(w *writer, ns spec.GKENamespace) {
 	if ns.IstioInjection != "" {
 		w.line("istio_injection = " + quote(ns.IstioInjection))
 	}
-	if len(ns.Routes) > 0 {
+	if len(ns.RouteAuthPolicies) > 0 {
 		if ns.IstioInjection != "" {
 			w.blank()
 		}
+		emitGKERouteAuthPolicies(w, ns.RouteAuthPolicies)
+	}
+	if len(ns.Routes) > 0 {
+		if ns.IstioInjection != "" || len(ns.RouteAuthPolicies) > 0 {
+			w.blank()
+		}
 		emitGKERoutes(w, ns.Routes)
+	}
+}
+
+func emitGKERouteAuthPolicies(w *writer, policies map[string]spec.GKERouteAuthPolicy) {
+	w.line("route_auth_policies = {")
+	keys := sortedKeys(policies)
+	for i, k := range keys {
+		if i > 0 {
+			w.blank()
+		}
+		w.indent += 2
+		w.line(quote(k) + " = {")
+		w.indent += 2
+		emitGKERouteAuthPolicyBody(w, policies[k])
+		w.indent -= 2
+		w.line("}")
+		w.indent -= 2
+	}
+	w.line("}")
+}
+
+func emitGKERouteAuthPolicyBody(w *writer, policy spec.GKERouteAuthPolicy) {
+	if policy.Enforced != nil {
+		w.line("enforced = " + boolStr(*policy.Enforced))
+	}
+	if len(policy.PublicPaths) > 0 {
+		if policy.Enforced != nil {
+			w.blank()
+		}
+		emitMultilineStringList(w, "public_paths", policy.PublicPaths)
+	}
+	if len(policy.RequiredGroups) > 0 {
+		if policy.Enforced != nil || len(policy.PublicPaths) > 0 {
+			w.blank()
+		}
+		emitMultilineStringList(w, "required_groups", policy.RequiredGroups)
+	}
+	if len(policy.RequiredRoles) > 0 {
+		if policy.Enforced != nil || len(policy.PublicPaths) > 0 || len(policy.RequiredGroups) > 0 {
+			w.blank()
+		}
+		emitMultilineStringList(w, "required_roles", policy.RequiredRoles)
 	}
 }
 

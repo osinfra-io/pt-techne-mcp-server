@@ -118,14 +118,22 @@ type KubernetesEngine struct {
 }
 
 type GKENamespace struct {
-	IstioInjection string              `json:"istio_injection,omitempty"`
-	Routes         map[string]GKERoute `json:"routes,omitempty"`
+	IstioInjection    string                        `json:"istio_injection,omitempty"`
+	RouteAuthPolicies map[string]GKERouteAuthPolicy `json:"route_auth_policies,omitempty"`
+	Routes            map[string]GKERoute           `json:"routes,omitempty"`
 }
 
 type GKERoute struct {
 	Path    string `json:"path,omitempty"`
 	Port    int    `json:"port"`
 	Service string `json:"service"`
+}
+
+type GKERouteAuthPolicy struct {
+	Enforced       *bool    `json:"enforced,omitempty"`
+	PublicPaths    []string `json:"public_paths,omitempty"`
+	RequiredGroups []string `json:"required_groups,omitempty"`
+	RequiredRoles  []string `json:"required_roles,omitempty"`
 }
 
 type ArtifactRegistryGroups struct {
