@@ -362,8 +362,8 @@ func emitPlatformManagedProject(w *writer, p spec.PlatformManagedProject) {
 		first = false
 		fn()
 	}
-	if p.CloudSQL != nil {
-		em(func() { emitCloudSQL(w, *p.CloudSQL) })
+	if len(p.CloudSQL) > 0 {
+		em(func() { emitCloudSQL(w, p.CloudSQL) })
 	}
 	if p.EnableDatadog != nil {
 		em(func() { w.line("enable_datadog = " + boolStr(*p.EnableDatadog)) })
@@ -375,19 +375,30 @@ func emitPlatformManagedProject(w *writer, p spec.PlatformManagedProject) {
 	w.line("}")
 }
 
-func emitCloudSQL(w *writer, c spec.CloudSQL) {
+func emitCloudSQL(w *writer, instances map[string]spec.CloudSQL) {
 	w.line("cloud_sql = {")
-	w.indent += 2
-	var rows [][2]string
-	if c.DatabaseVersion != "" {
-		rows = append(rows, [2]string{"database_version", quote(c.DatabaseVersion)})
+	keys := sortedKeys(instances)
+	for i, k := range keys {
+		if i > 0 {
+			w.blank()
+		}
+		w.indent += 2
+		w.line(quote(k) + " = {")
+		w.indent += 2
+		c := instances[k]
+		var rows [][2]string
+		if c.DatabaseVersion != "" {
+			rows = append(rows, [2]string{"database_version", quote(c.DatabaseVersion)})
+		}
+		if c.MachineTier != "" {
+			rows = append(rows, [2]string{"machine_tier", quote(c.MachineTier)})
+		}
+		rows = append(rows, [2]string{"regions", emitStringList(c.Regions)})
+		w.alignedTop(rows)
+		w.indent -= 2
+		w.line("}")
+		w.indent -= 2
 	}
-	if c.MachineTier != "" {
-		rows = append(rows, [2]string{"machine_tier", quote(c.MachineTier)})
-	}
-	rows = append(rows, [2]string{"regions", emitStringList(c.Regions)})
-	w.alignedTop(rows)
-	w.indent -= 2
 	w.line("}")
 }
 

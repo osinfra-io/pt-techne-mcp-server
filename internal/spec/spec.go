@@ -98,9 +98,9 @@ type GitHubPagesSource struct {
 }
 
 type PlatformManagedProject struct {
-	CloudSQL         *CloudSQL         `json:"cloud_sql,omitempty"`
-	EnableDatadog    *bool             `json:"enable_datadog,omitempty"`
-	KubernetesEngine *KubernetesEngine `json:"kubernetes_engine,omitempty"`
+	CloudSQL         map[string]CloudSQL `json:"cloud_sql,omitempty"`
+	EnableDatadog    *bool               `json:"enable_datadog,omitempty"`
+	KubernetesEngine *KubernetesEngine   `json:"kubernetes_engine,omitempty"`
 }
 
 type CloudSQL struct {
