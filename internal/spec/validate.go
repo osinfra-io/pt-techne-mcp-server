@@ -67,7 +67,7 @@ func (v *Validator) Validate(spec any) []ValidationError {
 		}
 		return []ValidationError{{Path: "", Message: err.Error()}}
 	}
-	return nil
+	return validateRouteAuthPolicies(spec)
 }
 
 // ValidateJSON parses raw JSON then validates. Returns a parse error before

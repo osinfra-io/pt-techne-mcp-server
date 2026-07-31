@@ -94,6 +94,15 @@ func TestRenderIncludesKubernetesNamespaces(t *testing.T) {
       "namespaces": {
         "istio-test": {
           "istio_injection": "enabled",
+          "route_auth_policies": {
+            "istio-test": {
+              "audiences": ["api://istio-test"],
+              "mode": "api-jwt",
+              "public_paths": ["/istio-test/healthz"],
+              "required_groups": ["group@example.com"],
+              "required_roles": ["admin"]
+            }
+          },
           "routes": {
             "istio-test": {
               "path": "/istio-test",
@@ -132,6 +141,24 @@ func TestRenderIncludesKubernetesNamespaces(t *testing.T) {
 	}
 	if !strings.Contains(out, "routes = {") {
 		t.Fatalf("render output missing routes block:\n%s", out)
+	}
+	if !strings.Contains(out, "route_auth_policies = {") {
+		t.Fatalf("render output missing route_auth_policies block:\n%s", out)
+	}
+	if !strings.Contains(out, `audiences = [`) {
+		t.Fatalf("render output missing audiences field:\n%s", out)
+	}
+	if !strings.Contains(out, `mode = "api-jwt"`) {
+		t.Fatalf("render output missing mode field:\n%s", out)
+	}
+	if !strings.Contains(out, `public_paths = [`) {
+		t.Fatalf("render output missing public_paths field:\n%s", out)
+	}
+	if !strings.Contains(out, `required_groups = [`) {
+		t.Fatalf("render output missing required_groups field:\n%s", out)
+	}
+	if !strings.Contains(out, `required_roles = [`) {
+		t.Fatalf("render output missing required_roles field:\n%s", out)
 	}
 	if !strings.Contains(out, `path = "/istio-test"`) {
 		t.Fatalf("render output missing route path field:\n%s", out)
