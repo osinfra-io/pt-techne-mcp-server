@@ -130,7 +130,8 @@ type GKERoute struct {
 }
 
 type GKERouteAuthPolicy struct {
-	Enforced       *bool    `json:"enforced,omitempty"`
+	Audiences      []string `json:"audiences,omitempty"`
+	Mode           *string  `json:"mode,omitempty"`
 	PublicPaths    []string `json:"public_paths,omitempty"`
 	RequiredGroups []string `json:"required_groups,omitempty"`
 	RequiredRoles  []string `json:"required_roles,omitempty"`

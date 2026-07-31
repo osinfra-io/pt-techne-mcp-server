@@ -142,12 +142,33 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 			valid: true,
 		},
 		{
-			name: "valid-disabled",
+			name: "valid-public",
 			namespace: `"app": {
 				"istio_injection": "enabled",
 				"route_auth_policies": {
 					"app": {
-						"enforced": false
+						"mode": "public"
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			valid: true,
+		},
+		{
+			name: "valid-api-jwt",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"audiences": ["api://app"],
+						"mode": "api-jwt",
+						"public_paths": ["/app/healthz"]
 					}
 				},
 				"routes": {
@@ -201,11 +222,12 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 			wantMessage: "existing route",
 		},
 		{
-			name: "enforced-without-principal",
+			name: "browser-without-principal",
 			namespace: `"app": {
 				"istio_injection": "enabled",
 				"route_auth_policies": {
 					"app": {
+						"mode": "browser",
 						"public_paths": ["/app/healthz"]
 					}
 				},
@@ -221,12 +243,12 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 			wantMessage: "required_groups or required_roles",
 		},
 		{
-			name: "disabled-with-fields",
+			name: "public-with-fields",
 			namespace: `"app": {
 				"istio_injection": "enabled",
 				"route_auth_policies": {
 					"app": {
-						"enforced": false,
+						"mode": "public",
 						"required_roles": ["admin"]
 					}
 				},
@@ -238,8 +260,71 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 					}
 				}
 			}`,
-			wantPath:    "/route_auth_policies/app/required_roles",
-			wantMessage: "disabled",
+			wantPath:    "/route_auth_policies/app",
+			wantMessage: "public",
+		},
+		{
+			name: "public-with-public-path",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"mode": "public",
+						"public_paths": ["/app/healthz"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/route_auth_policies/app",
+			wantMessage: "public",
+		},
+		{
+			name: "browser-with-audience",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"audiences": ["api://app"],
+						"mode": "browser",
+						"required_roles": ["admin"]
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/route_auth_policies/app/audiences",
+			wantMessage: "browser",
+		},
+		{
+			name: "api-jwt-without-audience",
+			namespace: `"app": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"app": {
+						"mode": "api-jwt"
+					}
+				},
+				"routes": {
+					"app": {
+						"path": "/app",
+						"port": 8080,
+						"service": "app"
+					}
+				}
+			}`,
+			wantPath:    "/route_auth_policies/app/audiences",
+			wantMessage: "api-jwt",
 		},
 		{
 			name: "public-path-outside-route-prefix",

@@ -1,6 +1,9 @@
 package spec
 
-import "regexp"
+import (
+	"regexp"
+	"unicode"
+)
 
 func validateRouteAuthPolicies(spec any) []ValidationError {
 	root, ok := spec.(map[string]any)
@@ -66,38 +69,61 @@ func validateNamespaceRouteAuthPolicies(path string, namespace map[string]any, p
 		if !ok {
 			continue
 		}
-		enforced := true
-		if v, ok := policy["enforced"].(bool); ok {
-			enforced = v
+		mode := "browser"
+		if v, ok := policy["mode"].(string); ok {
+			mode = v
 		}
+		audiences := stringList(policy["audiences"])
 		requiredGroups := stringList(policy["required_groups"])
 		requiredRoles := stringList(policy["required_roles"])
 		publicPaths := stringList(policy["public_paths"])
 
-		if enforced {
+		errs = append(errs, validateRouteAuthPolicyList(policyPath, "audiences", audiences)...)
+		errs = append(errs, validateRouteAuthPolicyList(policyPath, "public_paths", publicPaths)...)
+		errs = append(errs, validateRouteAuthPolicyList(policyPath, "required_groups", requiredGroups)...)
+		errs = append(errs, validateRouteAuthPolicyList(policyPath, "required_roles", requiredRoles)...)
+
+		switch mode {
+		case "public":
+			if len(audiences)+len(publicPaths)+len(requiredGroups)+len(requiredRoles) > 0 {
+				errs = append(errs, ValidationError{
+					Path:    policyPath,
+					Message: "public route_auth_policies must not declare audiences, public_paths, required_groups, or required_roles",
+				})
+			}
+		case "browser":
+			if len(audiences) > 0 {
+				errs = append(errs, ValidationError{
+					Path:    policyPath + "/audiences",
+					Message: "browser route_auth_policies must not declare audiences",
+				})
+			}
 			if len(requiredGroups)+len(requiredRoles) == 0 {
 				errs = append(errs, ValidationError{
 					Path:    policyPath,
-					Message: "enforced route_auth_policies must declare required_groups or required_roles",
+					Message: "browser route_auth_policies must declare required_groups or required_roles",
 				})
 			}
-		} else {
-			for _, field := range []string{"public_paths", "required_groups", "required_roles"} {
-				if _, declared := policy[field]; declared {
-					errs = append(errs, ValidationError{
-						Path:    policyPath + "/" + field,
-						Message: "disabled route_auth_policies must not declare public_paths, required_groups, or required_roles",
-					})
-				}
+		case "api-jwt":
+			if len(audiences) == 0 {
+				errs = append(errs, ValidationError{
+					Path:    policyPath + "/audiences",
+					Message: "api-jwt route_auth_policies must declare audiences",
+				})
 			}
+		default:
+			errs = append(errs, ValidationError{
+				Path:    policyPath + "/mode",
+				Message: "route_auth_policies mode must be one of public, browser, or api-jwt",
+			})
 		}
 
 		routePath := routePathPrefix(route)
 		for i, publicPath := range publicPaths {
-			if !pathUnderPrefix(publicPath, routePath) {
+			if !publicPathValid(publicPath) || !pathUnderPrefix(publicPath, routePath) {
 				errs = append(errs, ValidationError{
 					Path:    policyPath + "/public_paths/" + intPath(i),
-					Message: "public_paths must be under the route path prefix",
+					Message: "public_paths must start with /, contain no whitespace, stay under the route path prefix, and not be /",
 				})
 			}
 		}
@@ -133,6 +159,29 @@ func stringList(v any) []string {
 	return out
 }
 
+func validateRouteAuthPolicyList(policyPath, field string, values []string) []ValidationError {
+	var errs []ValidationError
+	seen := make(map[string]struct{}, len(values))
+	for i, value := range values {
+		itemPath := policyPath + "/" + field + "/" + intPath(i)
+		if value == "" || containsWhitespace(value) {
+			errs = append(errs, ValidationError{
+				Path:    itemPath,
+				Message: field + " entries must be non-empty strings with no whitespace",
+			})
+		}
+		if _, ok := seen[value]; ok {
+			errs = append(errs, ValidationError{
+				Path:    itemPath,
+				Message: field + " entries must be unique",
+			})
+			continue
+		}
+		seen[value] = struct{}{}
+	}
+	return errs
+}
+
 func routePathPrefix(route any) string {
 	routeMap, ok := route.(map[string]any)
 	if !ok {
@@ -142,6 +191,9 @@ func routePathPrefix(route any) string {
 	if !ok || path == "" {
 		return "/"
 	}
+	for len(path) > 1 && path[len(path)-1] == '/' {
+		path = path[:len(path)-1]
+	}
 	return path
 }
 
@@ -149,7 +201,20 @@ func pathUnderPrefix(path, prefix string) bool {
 	if prefix == "/" {
 		return path != "/"
 	}
-	return path == prefix || len(path) > len(prefix) && path[:len(prefix)+1] == prefix+"/"
+	return len(path) > len(prefix) && path[:len(prefix)+1] == prefix+"/"
+}
+
+func publicPathValid(path string) bool {
+	return path != "/" && len(path) > 0 && path[0] == '/' && !containsWhitespace(path)
+}
+
+func containsWhitespace(s string) bool {
+	for _, r := range s {
+		if unicode.IsSpace(r) {
+			return true
+		}
+	}
+	return false
 }
 
 func pointerPart(s string) string {

@@ -687,10 +687,26 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "enforced": {
-          "description": "Whether authentication and authorization are enforced for this route. Defaults to true.",
-          "type": "boolean",
-          "default": true
+        "audiences": {
+          "description": "JWT audiences accepted for this route. Values must be non-empty and must not contain whitespace.",
+          "type": "array",
+          "uniqueItems": true,
+          "default": [],
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\S+$"
+          }
+        },
+        "mode": {
+          "description": "Gateway auth mode for this route. Defaults to browser.",
+          "type": "string",
+          "enum": [
+            "public",
+            "browser",
+            "api-jwt"
+          ],
+          "default": "browser"
         },
         "public_paths": {
           "description": "Unauthenticated URL paths under the route path prefix. Each path must start with /, must not be /, and must not contain whitespace.",

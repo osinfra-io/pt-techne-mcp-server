@@ -553,23 +553,34 @@ func emitGKERouteAuthPolicies(w *writer, policies map[string]spec.GKERouteAuthPo
 }
 
 func emitGKERouteAuthPolicyBody(w *writer, policy spec.GKERouteAuthPolicy) {
-	if policy.Enforced != nil {
-		w.line("enforced = " + boolStr(*policy.Enforced))
+	emitted := false
+	if len(policy.Audiences) > 0 {
+		emitMultilineStringList(w, "audiences", policy.Audiences)
+		emitted = true
+	}
+	if policy.Mode != nil {
+		if emitted {
+			w.blank()
+		}
+		w.line("mode = " + quote(*policy.Mode))
+		emitted = true
 	}
 	if len(policy.PublicPaths) > 0 {
-		if policy.Enforced != nil {
+		if emitted {
 			w.blank()
 		}
 		emitMultilineStringList(w, "public_paths", policy.PublicPaths)
+		emitted = true
 	}
 	if len(policy.RequiredGroups) > 0 {
-		if policy.Enforced != nil || len(policy.PublicPaths) > 0 {
+		if emitted {
 			w.blank()
 		}
 		emitMultilineStringList(w, "required_groups", policy.RequiredGroups)
+		emitted = true
 	}
 	if len(policy.RequiredRoles) > 0 {
-		if policy.Enforced != nil || len(policy.PublicPaths) > 0 || len(policy.RequiredGroups) > 0 {
+		if emitted {
 			w.blank()
 		}
 		emitMultilineStringList(w, "required_roles", policy.RequiredRoles)
