@@ -2,6 +2,7 @@ package spec
 
 import (
 	"regexp"
+	"sort"
 	"unicode"
 )
 
@@ -24,8 +25,8 @@ func validateRouteAuthPolicies(spec any) []ValidationError {
 	}
 
 	var errs []ValidationError
-	for namespaceName, rawNamespace := range namespaces {
-		namespace, ok := rawNamespace.(map[string]any)
+	for _, namespaceName := range sortedSpecKeys(namespaces) {
+		namespace, ok := namespaces[namespaceName].(map[string]any)
 		if !ok {
 			continue
 		}
@@ -49,7 +50,8 @@ func validateNamespaceRouteAuthPolicies(path string, namespace map[string]any, p
 	}
 
 	routes, _ := objectAt(namespace, "routes")
-	for routeName, rawPolicy := range policies {
+	for _, routeName := range sortedSpecKeys(policies) {
+		rawPolicy := policies[routeName]
 		policyPath := path + "/route_auth_policies/" + pointerPart(routeName)
 		if !routeAuthPolicyKeyValid(routeName) {
 			errs = append(errs, ValidationError{
@@ -134,6 +136,15 @@ func validateNamespaceRouteAuthPolicies(path string, namespace map[string]any, p
 func routeAuthPolicyKeyValid(routeName string) bool {
 	ok, _ := regexp.MatchString(`^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?$`, routeName)
 	return ok
+}
+
+func sortedSpecKeys(m map[string]any) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func objectAt(m map[string]any, key string) (map[string]any, bool) {
