@@ -15,3 +15,94 @@ jobs:
     uses: osinfra-io/pt-techne-misc-workflows/.github/workflows/release.yml@cd7f9e2c86fe5bbafd21b8f12cc0e6cbe504f0f7  # v0.2.8
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
+
+  binaries:
+    name: "Binaries (${{ matrix.goos }}/${{ matrix.goarch }})"
+    needs: release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux]
+        goarch: [amd64, arm64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e  # v7.0.0
+        with:
+          go-version: 1.26.3
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+          VERSION: ${{ github.ref_name }}
+        run: |
+          mkdir -p dist
+          GOFLAGS=-trimpath go build \
+            -ldflags "-s -w -X main.version=${VERSION}" \
+            -o "dist/pt-techne-mcp-server-${GOOS}-${GOARCH}" \
+            ./cmd/pt-techne-mcp-server
+
+      - name: Upload to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release upload "$TAG" \
+            "dist/pt-techne-mcp-server-${{ matrix.goos }}-${{ matrix.goarch }}" \
+            --repo "${{ github.repository }}"
+
+  image:
+    name: "Container image"
+    needs: [release, binaries]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    env:
+      VERSION: ${{ github.ref_name }}
+    steps:
+      # Checkout
+      # https://github.com/marketplace/actions/checkout
+
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      # Docker Buildx
+      # https://github.com/marketplace/actions/docker-setup-buildx
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e  # v4.3.0
+
+      # Docker Login
+      # https://github.com/marketplace/actions/docker-login
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f  # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build and Push Docker to GitHub Container Registry
+      # https://github.com/marketplace/actions/build-and-push-docker-images
+
+      - name: Build and push image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a  # v7.3.0
+        with:
+          context: .
+          file: Dockerfile
+          build-args: |
+            VERSION=${{ env.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/pt-techne-mcp-server:${{ env.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/pt-techne-mcp-server:latest
