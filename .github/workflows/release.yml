@@ -8,7 +8,6 @@ on:
 permissions:
   contents: write
   id-token: write
-  packages: write
 
 jobs:
   release:
@@ -58,7 +57,7 @@ jobs:
 
   image:
     name: "Container image"
-    needs: release
+    needs: [release, binaries]
     runs-on: ubuntu-latest
     permissions:
       contents: read
