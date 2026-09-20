@@ -637,7 +637,7 @@
           "default": "disabled"
         },
         "route_auth_policies": {
-          "description": "Gateway auth policy intent for namespace routes, keyed by an existing route name. Pneuma renders each entry as gateway authentication and authorization policy for the matching route. Policies may only be declared on mesh-enabled namespaces (istio_injection = enabled).",
+          "description": "Gateway auth policy intent for namespace routes, keyed by an existing route name. Pneuma renders each entry as gateway authentication and authorization policy for the matching route. Policies may only be declared on mesh-enabled namespaces (istio_injection = enabled). Because browser routes for a team share one host-scoped Authentik application, every browser policy across the team's namespaces must declare identical required_groups and required_roles.",
           "type": "object",
           "propertyNames": {
             "pattern": "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?$"

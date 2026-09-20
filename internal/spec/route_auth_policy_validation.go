@@ -37,6 +37,52 @@ func validateRouteAuthPolicies(spec any) []ValidationError {
 		path := "/platform_managed_project/kubernetes_engine/namespaces/" + pointerPart(namespaceName)
 		errs = append(errs, validateNamespaceRouteAuthPolicies(path, namespace, policies)...)
 	}
+	errs = append(errs, validateSharedBrowserRouteRequirements(namespaces)...)
+	return errs
+}
+
+func validateSharedBrowserRouteRequirements(namespaces map[string]any) []ValidationError {
+	var baselineGroups, baselineRoles []string
+	baselineSet := false
+	var errs []ValidationError
+
+	for _, namespaceName := range sortedSpecKeys(namespaces) {
+		namespace, ok := namespaces[namespaceName].(map[string]any)
+		if !ok {
+			continue
+		}
+		policies, ok := objectAt(namespace, "route_auth_policies")
+		if !ok {
+			continue
+		}
+		for _, routeName := range sortedSpecKeys(policies) {
+			policy, ok := policies[routeName].(map[string]any)
+			if !ok {
+				continue
+			}
+			mode, _ := policy["mode"].(string)
+			if mode != "" && mode != "browser" {
+				continue
+			}
+
+			groups := sortedStrings(stringList(policy["required_groups"]))
+			roles := sortedStrings(stringList(policy["required_roles"]))
+			if !baselineSet {
+				baselineGroups = groups
+				baselineRoles = roles
+				baselineSet = true
+				continue
+			}
+			if equalStrings(groups, baselineGroups) && equalStrings(roles, baselineRoles) {
+				continue
+			}
+
+			errs = append(errs, ValidationError{
+				Path:    "/platform_managed_project/kubernetes_engine/namespaces/" + pointerPart(namespaceName) + "/route_auth_policies/" + pointerPart(routeName),
+				Message: "all browser route_auth_policies for a team must declare identical required_groups and required_roles because they share one host-scoped Authentik application",
+			})
+		}
+	}
 	return errs
 }
 
@@ -168,6 +214,24 @@ func stringList(v any) []string {
 		}
 	}
 	return out
+}
+
+func sortedStrings(values []string) []string {
+	out := append([]string(nil), values...)
+	sort.Strings(out)
+	return out
+}
+
+func equalStrings(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func validateRouteAuthPolicyList(policyPath, field string, values []string) []ValidationError {
