@@ -182,6 +182,77 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 			valid: true,
 		},
 		{
+			name: "valid-shared-browser-requirements",
+			namespace: `"admin": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"admin": {
+						"required_groups": ["operators", "admins"],
+						"required_roles": ["viewer"]
+					}
+				},
+				"routes": {
+					"admin": {
+						"path": "/admin",
+						"port": 8080,
+						"service": "admin"
+					}
+				}
+			},
+			"reports": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"reports": {
+						"required_groups": ["admins", "operators"],
+						"required_roles": ["viewer"]
+					}
+				},
+				"routes": {
+					"reports": {
+						"path": "/reports",
+						"port": 8080,
+						"service": "reports"
+					}
+				}
+			}`,
+			valid: true,
+		},
+		{
+			name: "conflicting-shared-browser-requirements",
+			namespace: `"admin": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"admin": {
+						"required_groups": ["admins"]
+					}
+				},
+				"routes": {
+					"admin": {
+						"path": "/admin",
+						"port": 8080,
+						"service": "admin"
+					}
+				}
+			},
+			"reports": {
+				"istio_injection": "enabled",
+				"route_auth_policies": {
+					"reports": {
+						"required_groups": ["reporters"]
+					}
+				},
+				"routes": {
+					"reports": {
+						"path": "/reports",
+						"port": 8080,
+						"service": "reports"
+					}
+				}
+			}`,
+			wantPath:    "/namespaces/reports/route_auth_policies/reports",
+			wantMessage: "identical required_groups and required_roles",
+		},
+		{
 			name: "mesh-disabled",
 			namespace: `"app": {
 				"istio_injection": "disabled",
