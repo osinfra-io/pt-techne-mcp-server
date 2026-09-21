@@ -4,7 +4,7 @@ go 1.26.3
 
 require (
 	github.com/google/go-github/v68 v68.0.0
-	github.com/hashicorp/hcl/v2 v2.24.0
+	github.com/hashicorp/hcl/v2 v2.25.0
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/zclconf/go-cty v1.19.0
