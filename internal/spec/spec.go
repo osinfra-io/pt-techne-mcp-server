@@ -118,7 +118,7 @@ type KubernetesEngine struct {
 }
 
 type GKENamespace struct {
-	IstioInjection    string                        `json:"istio_injection,omitempty"`
+	MeshEnabled       *bool                         `json:"mesh_enabled,omitempty"`
 	RouteAuthPolicies map[string]GKERouteAuthPolicy `json:"route_auth_policies,omitempty"`
 	Routes            map[string]GKERoute           `json:"routes,omitempty"`
 }

@@ -517,17 +517,17 @@ func emitGKENamespaces(w *writer, namespaces map[string]spec.GKENamespace) {
 }
 
 func emitGKENamespaceBody(w *writer, ns spec.GKENamespace) {
-	if ns.IstioInjection != "" {
-		w.line("istio_injection = " + quote(ns.IstioInjection))
+	if ns.MeshEnabled != nil {
+		w.line("mesh_enabled = " + boolStr(*ns.MeshEnabled))
 	}
 	if len(ns.RouteAuthPolicies) > 0 {
-		if ns.IstioInjection != "" {
+		if ns.MeshEnabled != nil {
 			w.blank()
 		}
 		emitGKERouteAuthPolicies(w, ns.RouteAuthPolicies)
 	}
 	if len(ns.Routes) > 0 {
-		if ns.IstioInjection != "" || len(ns.RouteAuthPolicies) > 0 {
+		if ns.MeshEnabled != nil || len(ns.RouteAuthPolicies) > 0 {
 			w.blank()
 		}
 		emitGKERoutes(w, ns.Routes)
