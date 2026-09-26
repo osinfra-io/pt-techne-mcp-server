@@ -124,7 +124,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "valid-required-group",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"public_paths": ["/app/healthz"],
@@ -144,7 +144,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "valid-public",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"mode": "public"
@@ -163,7 +163,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "valid-api-jwt",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"audiences": ["api://app"],
@@ -184,7 +184,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "valid-shared-browser-requirements",
 			namespace: `"admin": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"admin": {
 						"required_groups": ["operators", "admins"],
@@ -200,7 +200,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 				}
 			},
 			"reports": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"reports": {
 						"required_groups": ["admins", "operators"],
@@ -220,7 +220,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "conflicting-shared-browser-requirements",
 			namespace: `"admin": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"admin": {
 						"required_groups": ["admins"]
@@ -235,7 +235,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 				}
 			},
 			"reports": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"reports": {
 						"required_groups": ["reporters"]
@@ -255,7 +255,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "mesh-disabled",
 			namespace: `"app": {
-				"istio_injection": "disabled",
+				"mesh_enabled": false,
 				"route_auth_policies": {
 					"app": {
 						"required_groups": ["group@example.com"]
@@ -275,7 +275,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "unknown-route-key",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"missing": {
 						"required_groups": ["group@example.com"]
@@ -295,7 +295,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "browser-without-principal",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"mode": "browser",
@@ -316,7 +316,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "public-with-fields",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"mode": "public",
@@ -337,7 +337,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "public-with-public-path",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"mode": "public",
@@ -358,7 +358,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "browser-with-audience",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"audiences": ["api://app"],
@@ -380,7 +380,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "api-jwt-without-audience",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"mode": "api-jwt"
@@ -400,7 +400,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "public-path-outside-route-prefix",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"public_paths": ["/other/healthz"],
@@ -421,7 +421,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "non-rfc1123-key",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"App": {
 						"required_groups": ["group@example.com"]
@@ -441,7 +441,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "duplicate-public-paths",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"public_paths": ["/app/healthz", "/app/healthz"],
@@ -462,7 +462,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "whitespace-required-group",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"required_groups": ["bad group"]
@@ -482,7 +482,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "duplicate-required-roles",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"required_roles": ["admin", "admin"]
@@ -502,7 +502,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "whitespace-required-role",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"required_roles": ["bad role"]
@@ -522,7 +522,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 		{
 			name: "bad-public-path",
 			namespace: `"app": {
-				"istio_injection": "enabled",
+				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
 						"public_paths": ["/"],

@@ -88,10 +88,10 @@ func validateSharedBrowserRouteRequirements(namespaces map[string]any) []Validat
 
 func validateNamespaceRouteAuthPolicies(path string, namespace map[string]any, policies map[string]any) []ValidationError {
 	var errs []ValidationError
-	if namespace["istio_injection"] != "enabled" {
+	if namespace["mesh_enabled"] != true {
 		errs = append(errs, ValidationError{
 			Path:    path + "/route_auth_policies",
-			Message: "route_auth_policies may only be declared when istio_injection is enabled",
+			Message: "route_auth_policies may only be declared when mesh_enabled is true",
 		})
 	}
 
