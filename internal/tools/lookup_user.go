@@ -28,7 +28,7 @@ type LookupUserInput struct {
 // The fields are structured rather than encoded into a single role
 // string so callers can filter or display them without re-parsing.
 //
-//	system     — "datadog" | "github" | "google" | "gke"
+//	system     — "authentik" | "datadog" | "github" | "google" | "gke"
 //	scope      — "team"        (datadog parent team)
 //	             "team-parent" | "team-child" (github)
 //	             "basic" | "browser" | "project-creator" | "xpn-admin" (google)
@@ -59,7 +59,7 @@ type LookupUserOutput struct {
 func LookupUser(s *mcp.Server, v *spec.Validator, c gh.Client) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "lookup_user",
-		Description: "Find every team and role where a user appears across all teams in osinfra-io/pt-logos@main. Provide exactly one of github_username (matched case-insensitively against GitHub roles) or email (matched case-insensitively against Datadog and Google group roles). Returns {matches: []} (possibly empty) — empty is success, not an error. Requires NOMOS_GITHUB_TOKEN.",
+		Description: "Find every team and role where a user appears across all teams in osinfra-io/pt-logos@main. Provide exactly one of github_username (matched case-insensitively against GitHub roles) or email (matched case-insensitively against Datadog, Google, and Authentik application group memberships). Returns {matches: []} (possibly empty) — empty is success, not an error. Requires NOMOS_GITHUB_TOKEN.",
 		Annotations: &mcp.ToolAnnotations{
 			Title:        "Look up user",
 			ReadOnlyHint: true,
@@ -119,6 +119,13 @@ func scanTeam(t *spec.Team, via, target string) []LookupUserMatch {
 	}
 
 	if via == "email" {
+		for key, group := range t.AuthentikGroups {
+			for env, members := range group.Members {
+				if containsCI(members, target) {
+					add(LookupUserMatch{System: "authentik", Scope: "application", Subject: key + "/" + env, Membership: "member"})
+				}
+			}
+		}
 		// Datadog
 		for _, m := range []struct {
 			list []string

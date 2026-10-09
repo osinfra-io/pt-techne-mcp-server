@@ -71,6 +71,9 @@ func emitTeamBody(w *writer, t *spec.Team) {
 		fn()
 	}
 
+	if len(t.AuthentikGroups) > 0 {
+		emit(func() { emitAuthentikGroups(w, t.AuthentikGroups) })
+	}
 	emit(func() { emitDatadog(w, t.DatadogTeamMemberships) })
 	emit(func() { emitDisplayName(w, t.DisplayName, t.DisplayNameComment) })
 
@@ -121,6 +124,43 @@ func emitTeamBody(w *writer, t *spec.Team) {
 	}
 
 	emit(func() { w.line("team_type = " + quote(t.TeamType)) })
+}
+
+func emitAuthentikGroups(w *writer, groups map[string]spec.AuthentikGroup) {
+	w.line("authentik_groups = {")
+	w2 := nested(w)
+	keys := make([]string, 0, len(groups))
+	for key := range groups {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		group := groups[key]
+		w2.line(quote(key) + " = {")
+		w3 := nested(w2)
+		w3.aligned([][2]string{
+			{"description", quote(group.Description)},
+			{"label", quote(group.Label)},
+		})
+		if len(group.Members) > 0 {
+			w3.blank()
+			w3.line("members = {")
+			w4 := nested(w3)
+			var rows [][2]string
+			for _, env := range []string{"non-production", "production", "sandbox"} {
+				if members, ok := group.Members[env]; ok {
+					rows = append(rows, [2]string{env, emitStringList(members)})
+				}
+			}
+			w4.aligned(rows)
+			w3.merge(w4)
+			w3.line("}")
+		}
+		w2.merge(w3)
+		w2.line("}")
+	}
+	w.merge(w2)
+	w.line("}")
 }
 
 func emitDatadog(w *writer, d spec.DatadogTeamMemberships) {

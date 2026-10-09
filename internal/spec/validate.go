@@ -67,7 +67,7 @@ func (v *Validator) Validate(spec any) []ValidationError {
 		}
 		return []ValidationError{{Path: "", Message: err.Error()}}
 	}
-	return validateRouteAuthPolicies(spec)
+	return append(validateRouteAuthPolicies(spec), validateAuthentikGroups(spec)...)
 }
 
 // ValidateJSON parses raw JSON then validates. Returns a parse error before

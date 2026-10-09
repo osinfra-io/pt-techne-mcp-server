@@ -3,6 +3,7 @@ package spec
 import (
 	"regexp"
 	"sort"
+	"strings"
 	"unicode"
 )
 
@@ -239,12 +240,19 @@ func validateRouteAuthPolicyList(policyPath, field string, values []string) []Va
 	seen := make(map[string]struct{}, len(values))
 	for i, value := range values {
 		itemPath := policyPath + "/" + field + "/" + intPath(i)
-		if value == "" || containsWhitespace(value) {
+		valid := value != "" && !containsWhitespace(value)
+		message := field + " entries must be non-empty strings with no whitespace"
+		if field == "required_groups" || field == "required_roles" {
+			valid = validIdentityName(value)
+			message = field + " entries must be printable ASCII names with single internal spaces and no comma or pipe delimiters"
+		}
+		if !valid {
 			errs = append(errs, ValidationError{
 				Path:    itemPath,
-				Message: field + " entries must be non-empty strings with no whitespace",
+				Message: message,
 			})
 		}
+
 		if _, ok := seen[value]; ok {
 			errs = append(errs, ValidationError{
 				Path:    itemPath,
@@ -255,6 +263,18 @@ func validateRouteAuthPolicyList(policyPath, field string, values []string) []Va
 		seen[value] = struct{}{}
 	}
 	return errs
+}
+
+func validIdentityName(value string) bool {
+	if value == "" || strings.TrimSpace(value) != value || strings.Contains(value, "  ") {
+		return false
+	}
+	for _, r := range value {
+		if r < ' ' || r > '~' || r == ',' || r == '|' {
+			return false
+		}
+	}
+	return true
 }
 
 func routePathPrefix(route any) string {

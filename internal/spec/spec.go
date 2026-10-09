@@ -6,6 +6,7 @@ package spec
 
 // Team is a single team's full configuration.
 type Team struct {
+	AuthentikGroups                 map[string]AuthentikGroup        `json:"authentik_groups,omitempty"`
 	TeamKey                         string                           `json:"team_key"`
 	DatadogTeamMemberships          DatadogTeamMemberships           `json:"datadog_team_memberships"`
 	DisplayName                     string                           `json:"display_name"`
@@ -25,6 +26,12 @@ type Team struct {
 	GoogleXPNAdminGroups            *EnvScopedGoogleGroups           `json:"google_xpn_admin_groups_memberships,omitempty"`
 	PlatformManagedProject          *PlatformManagedProject          `json:"platform_managed_project,omitempty"`
 	TeamType                        string                           `json:"team_type"`
+}
+
+type AuthentikGroup struct {
+	Description string              `json:"description"`
+	Label       string              `json:"label"`
+	Members     map[string][]string `json:"members,omitempty"`
 }
 
 type DatadogTeamMemberships struct {
