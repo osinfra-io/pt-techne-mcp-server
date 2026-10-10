@@ -15,6 +15,39 @@
     "team_type"
   ],
   "properties": {
+    "authentik_groups": {
+      "description": "Team-owned Authentik application-access groups, keyed by stable RFC 1123 identifiers. Names are derived as <team-key>: <label>, for example pt-pneuma: agentgateway Admins. These groups never grant Authentik administrative privileges. Membership is explicit per environment and does not inherit team membership.",
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description", "label"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "label": {
+            "description": "Human-readable application and role label, for example agentgateway Admins. Preserve application branding; labels must be unique within the owning team.",
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9]*( [A-Za-z0-9]+)*$"
+          },
+          "members": {
+            "description": "Explicit member emails per environment. Omitted environments have no members. Google OAuth remains the sign-in mechanism.",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "non-production": {"$ref": "#/$defs/authentikMemberList"},
+              "production": {"$ref": "#/$defs/authentikMemberList"},
+              "sandbox": {"$ref": "#/$defs/authentikMemberList"}
+            }
+          }
+        }
+      }
+    },
     "team_key": {
       "description": "Team key. Must match the team_type prefix scheme: pt- (platform), st- (stream-aligned), ct- (complicated-subsystem), et- (enabling).",
       "type": "string",
@@ -241,6 +274,15 @@
     }
   ],
   "$defs": {
+    "authentikMemberList": {
+      "description": "Unique lowercase Google identity email addresses explicitly granted application access.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9-]+(\\.[a-z0-9-]+)+$"
+      }
+    },
     "emailList": {
       "description": "List of email addresses.",
       "type": "array",
@@ -718,25 +760,25 @@
           }
         },
         "required_groups": {
-          "description": "Identity groups allowed to access the route. Values must be non-empty and must not contain whitespace.",
+          "description": "Identity groups allowed to access the route. Names may contain single internal spaces, for example pt-pneuma: agentgateway Admins, but must not contain leading/trailing whitespace, control characters, comma or pipe delimiters.",
           "type": "array",
           "uniqueItems": true,
           "default": [],
           "items": {
             "type": "string",
             "minLength": 1,
-            "pattern": "^\\S+$"
+            "pattern": "^[!-+\\--{}~]+( [!-+\\--{}~]+)*$"
           }
         },
         "required_roles": {
-          "description": "Application roles allowed to access the route. Values must be non-empty and must not contain whitespace.",
+          "description": "Application roles allowed to access the route. Names may contain single internal spaces but must not contain leading/trailing whitespace, control characters, comma or pipe delimiters.",
           "type": "array",
           "uniqueItems": true,
           "default": [],
           "items": {
             "type": "string",
             "minLength": 1,
-            "pattern": "^\\S+$"
+            "pattern": "^[!-+\\--{}~]+( [!-+\\--{}~]+)*$"
           }
         }
       }

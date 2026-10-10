@@ -465,7 +465,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
-						"required_groups": ["bad group"]
+						"required_groups": [" bad group"]
 					}
 				},
 				"routes": {
@@ -505,7 +505,7 @@ func TestValidateRouteAuthPolicies(t *testing.T) {
 				"mesh_enabled": true,
 				"route_auth_policies": {
 					"app": {
-						"required_roles": ["bad role"]
+						"required_roles": ["bad role "]
 					}
 				},
 				"routes": {

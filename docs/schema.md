@@ -4,6 +4,13 @@ Generated from `schema/team.schema.json` — do not edit by hand.
 
 Run `go run ./internal/schemadoc schema/team.schema.json docs/schema.md` to regenerate.
 
+## `authentik_groups`
+
+Team-owned Authentik application-access groups, keyed by stable RFC 1123 identifiers. Names are derived as <team-key>: <label>, for example pt-pneuma: agentgateway Admins. These groups never grant Authentik administrative privileges. Membership is explicit per environment and does not inherit team membership.
+
+- **type:** `object`
+- **required:** false
+
 ## `datadog_team_memberships`
 
 Datadog team memberships. admins manage the team; members have read-only access.
