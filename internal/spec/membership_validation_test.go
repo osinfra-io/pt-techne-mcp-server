@@ -1,6 +1,97 @@
 package spec
 
-import "testing"
+import (
+	"encoding/json"
+	"strings"
+	"testing"
+)
+
+func TestEmbeddedSchemaRequiresPneumaAdministrator(t *testing.T) {
+	validator, err := NewValidator()
+	if err != nil {
+		t.Fatalf("NewValidator: %v", err)
+	}
+	const valid = `{
+		"team_key": "pt-pneuma",
+		"team_type": "platform-team",
+		"display_name": "Pneuma",
+		"display_name_comment": "Pneuma platform team",
+		"datadog_team_memberships": {"admins": ["admin@osinfra.io"], "members": []},
+		"github_parent_team_memberships": {"maintainers": ["admin"], "members": []},
+		"github_child_teams_memberships": {
+			"sandbox-approvers": {"maintainers": ["admin"], "members": []},
+			"non-production-approvers": {"maintainers": ["admin"], "members": []},
+			"production-approvers": {"maintainers": ["admin"], "members": []},
+			"repository-administrators": {"maintainers": ["admin"], "members": []}
+		},
+		"google_basic_groups_env_memberships": {
+			"admin": {
+				"sandbox": {"owners": ["admin@osinfra.io"], "managers": [], "members": []},
+				"non-production": {"owners": ["admin@osinfra.io"], "managers": [], "members": []},
+				"production": {"owners": ["admin@osinfra.io"], "managers": [], "members": []}
+			},
+			"reader": {
+				"sandbox": {"owners": ["admin@osinfra.io"], "managers": [], "members": []},
+				"non-production": {"owners": ["admin@osinfra.io"], "managers": [], "members": []},
+				"production": {"owners": ["admin@osinfra.io"], "managers": [], "members": []}
+			},
+			"writer": {
+				"sandbox": {"owners": ["admin@osinfra.io"], "managers": [], "members": []},
+				"non-production": {"owners": ["admin@osinfra.io"], "managers": [], "members": []},
+				"production": {"owners": ["admin@osinfra.io"], "managers": [], "members": []}
+			}
+		},
+		"authentik_groups": {
+			"openbao-secret-admins": {
+				"description": "Manage team secrets", "label": "OpenBao Secret Admins",
+				"members": {
+					"sandbox": ["admin@osinfra.io"],
+					"non-production": ["admin@osinfra.io"],
+					"production": ["admin@osinfra.io"]
+				}
+			},
+			"openbao-secret-readers": {"description": "Read team secrets", "label": "OpenBao Secret Readers"},
+			"openbao-secret-writers": {"description": "Write team secrets", "label": "OpenBao Secret Writers"},
+			"agentgateway-admins": {"description": "Manage agentgateway", "label": "agentgateway Admins"},
+			"authentik-admins": {
+				"description": "Manage authentik", "label": "authentik Admins",
+				"members": {
+					"sandbox": ["brett@osinfra.io", "other@osinfra.io"],
+					"non-production": ["brett@osinfra.io", "other@osinfra.io"],
+					"production": ["brett@osinfra.io", "other@osinfra.io"]
+				}
+			}
+		}
+	}`
+	for _, environment := range []string{"valid", "sandbox", "non-production", "production"} {
+		t.Run(environment, func(t *testing.T) {
+			var input map[string]any
+			if err := json.Unmarshal([]byte(valid), &input); err != nil {
+				t.Fatalf("decode fixture: %v", err)
+			}
+			if environment != "valid" {
+				groups := input["authentik_groups"].(map[string]any)
+				admins := groups["authentik-admins"].(map[string]any)
+				admins["members"].(map[string]any)[environment] = []any{"other@osinfra.io"}
+			}
+			// Bypass Go membership checks to exercise only the compiled embedded schema.
+			err := validator.schema.Validate(input)
+			if environment == "valid" {
+				if err != nil {
+					t.Fatalf("valid Pneuma spec rejected: %v", err)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatal("embedded schema accepted a missing designated administrator")
+			}
+			wantPath := "/authentik_groups/authentik-admins/members/" + environment
+			if !strings.Contains(err.Error(), wantPath) || !strings.Contains(err.Error(), "contains") {
+				t.Fatalf("expected contains failure at %s, got %v", wantPath, err)
+			}
+		})
+	}
+}
 
 func TestValidateMembershipRequirements(t *testing.T) {
 	tests := []struct {
