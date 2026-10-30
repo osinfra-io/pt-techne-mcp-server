@@ -69,9 +69,7 @@
         "admins": [
             "brett@osinfra.io"
         ],
-        "members": [
-            "brett@osinfra.io"
-        ]
+        "members": []
     },
     "display_name": "Pneuma",
     "display_name_comment": "The breath of life animating the platform via Kubernetes, orchestrating dynamic, self-healing, and scalable services atop the Logos foundation.",

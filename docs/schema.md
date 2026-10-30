@@ -13,7 +13,7 @@ Team-owned Authentik groups, keyed by stable RFC 1123 identifiers. Every team mu
 
 ## `datadog_team_memberships`
 
-Datadog team memberships. admins manage the team; members have read-only access.
+Datadog team memberships. At least one team admin is required; admins manage the team. Ordinary members have read-only access and may be empty.
 
 - **type:** `object`
 - **required:** true

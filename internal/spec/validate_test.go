@@ -26,7 +26,7 @@ func minimalValid() string {
 			"openbao-secret-readers": {"description": "Read OpenBao secrets", "label": "OpenBao Secret Readers"},
 			"openbao-secret-writers": {"description": "Write OpenBao secrets", "label": "OpenBao Secret Writers"}
 		},
-		"datadog_team_memberships": {"admins": ["a@b.com"], "members": ["a@b.com"]},
+		"datadog_team_memberships": {"admins": ["a@b.com"], "members": []},
 		"display_name": "Example",
 		"display_name_comment": "An example team used in tests.",
 		"github_child_teams_memberships": {
@@ -76,6 +76,16 @@ func TestValidate(t *testing.T) {
 		wantPath string // expected path substring on first error (if !valid)
 	}{
 		{"minimal-valid", minimalValid(), true, ""},
+		{
+			"datadog-member-without-admin",
+			strings.Replace(minimalValid(), `"datadog_team_memberships": {"admins": ["a@b.com"], "members": []}`, `"datadog_team_memberships": {"admins": [], "members": ["a@b.com"]}`, 1),
+			false, "/datadog_team_memberships/admins",
+		},
+		{
+			"datadog-empty-team",
+			strings.Replace(minimalValid(), `"datadog_team_memberships": {"admins": ["a@b.com"], "members": []}`, `"datadog_team_memberships": {"admins": [], "members": []}`, 1),
+			false, "/datadog_team_memberships/admins",
+		},
 		{
 			"missing-team-key",
 			strings.Replace(minimalValid(), `"team_key": "pt-example",`, ``, 1),

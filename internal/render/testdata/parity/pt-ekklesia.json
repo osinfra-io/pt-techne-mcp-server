@@ -39,9 +39,7 @@
         "admins": [
             "brett@osinfra.io"
         ],
-        "members": [
-            "brett@osinfra.io"
-        ]
+        "members": []
     },
     "display_name": "Ekklesia",
     "display_name_comment": "The assembly of the called-out — where distinct capabilities are gathered into a unified body, deliberating and acting in concert toward shared platform purpose.",
