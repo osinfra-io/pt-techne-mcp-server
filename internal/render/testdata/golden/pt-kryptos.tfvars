@@ -1,8 +1,29 @@
 teams = {
   pt-kryptos = {
+    authentik_groups = {
+      "openbao-secret-admins" = {
+        description = "Manage OpenBao secrets"
+        label       = "OpenBao Secret Admins"
+
+        members = {
+          non-production = ["brett@osinfra.io"]
+          production     = ["brett@osinfra.io"]
+          sandbox        = ["brett@osinfra.io"]
+        }
+      }
+      "openbao-secret-readers" = {
+        description = "Read OpenBao secrets"
+        label       = "OpenBao Secret Readers"
+      }
+      "openbao-secret-writers" = {
+        description = "Write OpenBao secrets"
+        label       = "OpenBao Secret Writers"
+      }
+    }
+
     datadog_team_memberships = {
       admins  = ["brett@osinfra.io"]
-      members = []
+      members = ["brett@osinfra.io"]
     }
 
     display_name = "Kryptos" # The hidden foundation of platform security — managing cryptographic primitives, secrets infrastructure, and security controls that underpin all teams on the platform.

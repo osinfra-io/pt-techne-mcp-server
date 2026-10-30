@@ -1,6 +1,7 @@
 package spec_test
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -12,9 +13,28 @@ import (
 func minimalValid() string {
 	return `{
 		"team_key": "pt-example",
-		"datadog_team_memberships": {"admins": ["a@b.com"], "members": []},
+		"authentik_groups": {
+			"openbao-secret-admins": {
+				"description": "Manage OpenBao secrets",
+				"label": "OpenBao Secret Admins",
+				"members": {
+					"non-production": ["a@b.com"],
+					"production": ["a@b.com"],
+					"sandbox": ["a@b.com"]
+				}
+			},
+			"openbao-secret-readers": {"description": "Read OpenBao secrets", "label": "OpenBao Secret Readers"},
+			"openbao-secret-writers": {"description": "Write OpenBao secrets", "label": "OpenBao Secret Writers"}
+		},
+		"datadog_team_memberships": {"admins": ["a@b.com"], "members": ["a@b.com"]},
 		"display_name": "Example",
 		"display_name_comment": "An example team used in tests.",
+		"github_child_teams_memberships": {
+			"non-production-approvers": {"maintainers": ["x"], "members": []},
+			"production-approvers": {"maintainers": ["x"], "members": []},
+			"repository-administrators": {"maintainers": ["x"], "members": []},
+			"sandbox-approvers": {"maintainers": ["x"], "members": []}
+		},
 		"github_parent_team_memberships": {"maintainers": ["x"], "members": []},
 		"google_basic_groups_env_memberships": {
 			"admin": {
@@ -108,6 +128,47 @@ func TestValidateJSON_BadJSON(t *testing.T) {
 	v := newValidator(t)
 	if _, err := v.ValidateJSON([]byte("not-json")); err == nil {
 		t.Fatal("expected parse error")
+	}
+}
+
+func TestValidateRequiresPneumaAuthentikAdminInEveryEnvironment(t *testing.T) {
+	v := newValidator(t)
+	for _, missingEnvironment := range []string{"sandbox", "non-production", "production"} {
+		t.Run(missingEnvironment, func(t *testing.T) {
+			var input map[string]any
+			if err := json.Unmarshal([]byte(minimalValid()), &input); err != nil {
+				t.Fatal(err)
+			}
+			input["team_key"] = "pt-pneuma"
+			groups := input["authentik_groups"].(map[string]any)
+			members := map[string]any{
+				"sandbox":        []string{"brett@osinfra.io"},
+				"non-production": []string{"brett@osinfra.io"},
+				"production":     []string{"brett@osinfra.io"},
+			}
+			members[missingEnvironment] = []string{"other@example.com"}
+			groups["authentik-admins"] = map[string]any{
+				"description": "Authentik instance administration",
+				"label":       "Authentik Admins",
+				"members":     members,
+			}
+			groups["agentgateway-admins"] = map[string]any{
+				"description": "agentgateway UI access",
+				"label":       "agentgateway Admins",
+			}
+
+			encoded, err := json.Marshal(input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			errs, err := v.ValidateJSON(encoded)
+			if err != nil {
+				t.Fatalf("ValidateJSON: %v", err)
+			}
+			if len(errs) == 0 {
+				t.Fatal("expected schema validation error when Brett is missing from Authentik Admins")
+			}
+		})
 	}
 }
 
@@ -601,6 +662,10 @@ func withNamespace(namespace string) string {
 							"services_ip_cidr_range": "10.62.64.0/20"
 						}
 					}
+				},
+				"artifact_registry_groups_memberships": {
+					"readers": {"managers": [], "members": [], "owners": ["a@b.com"]},
+					"writers": {"managers": [], "members": [], "owners": ["a@b.com"]}
 				},
 				"namespaces": {
 					`+namespace+`

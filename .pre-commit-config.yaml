@@ -11,7 +11,7 @@ repos:
       - id: check-symlinks
 
   - repo: https://github.com/golangci/golangci-lint
-    rev: c4e8435b673b0c51918007429309bf9d3cbca904  # frozen: v2.13.2
+    rev: 49ff9b7f5e2eca29d113af14fbf722b87b22b50a  # frozen: v2.15.0
     hooks:
       - id: golangci-lint-full
 
