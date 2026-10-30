@@ -1,5 +1,38 @@
 teams = {
   pt-techne = {
+    authentik_groups = {
+      "openbao-secret-admins" = {
+        description = "Manage secrets and versions within the pt-techne team prefix"
+        label       = "OpenBao Secret Admins"
+
+        members = {
+          non-production = ["brett@osinfra.io"]
+          production     = ["brett@osinfra.io"]
+          sandbox        = ["brett@osinfra.io"]
+        }
+      }
+      "openbao-secret-readers" = {
+        description = "Read and list secrets within the pt-techne team prefix"
+        label       = "OpenBao Secret Readers"
+
+        members = {
+          non-production = []
+          production     = []
+          sandbox        = []
+        }
+      }
+      "openbao-secret-writers" = {
+        description = "Create and update secrets within the pt-techne team prefix"
+        label       = "OpenBao Secret Writers"
+
+        members = {
+          non-production = []
+          production     = []
+          sandbox        = []
+        }
+      }
+    }
+
     datadog_team_memberships = {
       admins  = ["brett@osinfra.io"]
       members = []
@@ -36,6 +69,18 @@ teams = {
     }
 
     github_repositories = {
+      "pt-techne-agents" = {
+        description            = "AI agent definitions and Copilot coding agent configurations for the osinfra.io platform."
+        enable_datadog_webhook = true
+
+        topics = [
+          "agent",
+          "github-copilot",
+          "platform-team",
+          "pt-techne"
+        ]
+      }
+
       "pt-techne-ai-context" = {
         description = "Centralized AI context and GitHub Copilot instructions for the pt-techne team."
 
@@ -154,14 +199,20 @@ teams = {
     }
 
     github_repository_labels = {
-      "copilot"      = { color = "6E40C9", description = "Copilot instructions, skills, hooks, and agents" }
-      "dependencies" = { color = "0075CA", description = "Pull requests that update a dependency file" }
-      "devex"        = { color = "84A255", description = "Developer experience, tooling, and local environment" }
-      "docs"         = { color = "0052CC", description = "Docusaurus documentation site or other markdown documentation" }
-      "nomos"        = { color = "FFB400", description = "Created by the Nomos agent" }
-      "opentofu"     = { color = "FEDA15", description = "OpenTofu infrastructure code" }
-      "scripts"      = { color = "FBCA04", description = "Generator and utility scripts" }
-      "security"     = { color = "B60205", description = "Driven by security requirements or hardening" }
+      "actions"       = { color = "000000", description = "GitHub Actions workflows and automation" }
+      "copilot"       = { color = "6E40C9", description = "Copilot instructions, skills, hooks, and agents" }
+      "dependencies"  = { color = "0075CA", description = "Pull requests that update a dependency file" }
+      "devex"         = { color = "84A255", description = "Developer experience, tooling, and local environment" }
+      "docker"        = { color = "0DB7ED", description = "Docker images and container configuration" }
+      "docs"          = { color = "25C2A0", description = "Docusaurus documentation site or other markdown documentation" }
+      "kubernetes"    = { color = "326CE5", description = "Kubernetes manifests, Helm charts, and cluster configuration" }
+      "misc"          = { color = "C5DEF5", description = "Miscellaneous work that does not fit another label" }
+      "nomos"         = { color = "FFB400", description = "Created by the Nomos agent" }
+      "observability" = { color = "632CA6", description = "Observability, monitoring, and alerting" }
+      "opentofu"      = { color = "FEDA15", description = "OpenTofu infrastructure code" }
+      "scripts"       = { color = "89E051", description = "Generator and utility scripts" }
+      "security"      = { color = "B60205", description = "Driven by security requirements or hardening" }
+      "tests"         = { color = "1D76DB", description = "Test coverage, test infrastructure, and evaluations" }
     }
 
     google_basic_groups_env_memberships = {

@@ -6,7 +6,7 @@ package spec
 
 // Team is a single team's full configuration.
 type Team struct {
-	AuthentikGroups                 map[string]AuthentikGroup        `json:"authentik_groups,omitempty"`
+	AuthentikGroups                 map[string]AuthentikGroup        `json:"authentik_groups"`
 	TeamKey                         string                           `json:"team_key"`
 	DatadogTeamMemberships          DatadogTeamMemberships           `json:"datadog_team_memberships"`
 	DisplayName                     string                           `json:"display_name"`
@@ -14,7 +14,7 @@ type Team struct {
 	EnableGoogleProject             *bool                            `json:"enable_google_project,omitempty"`
 	EnableOpenTofuStateManagement   *bool                            `json:"enable_opentofu_state_management,omitempty"`
 	EnableWorkflows                 *bool                            `json:"enable_workflows,omitempty"`
-	GitHubChildTeamsMemberships     map[string]GitHubMembership      `json:"github_child_teams_memberships,omitempty"`
+	GitHubChildTeamsMemberships     map[string]GitHubMembership      `json:"github_child_teams_memberships"`
 	GitHubParentTeamMemberships     GitHubMembership                 `json:"github_parent_team_memberships"`
 	GitHubRepositories              map[string]GitHubRepository      `json:"github_repositories,omitempty"`
 	GitHubRepositoryLabels          map[string]GitHubRepositoryLabel `json:"github_repository_labels,omitempty"`

@@ -1,5 +1,58 @@
 teams = {
   pt-pneuma = {
+    authentik_groups = {
+      "agentgateway-admins" = {
+        description = "Access to the agentgateway administration UI"
+        label       = "agentgateway Admins"
+
+        members = {
+          non-production = ["brett@osinfra.io"]
+          production     = ["brett@osinfra.io"]
+          sandbox        = ["brett@osinfra.io"]
+        }
+      }
+      "authentik-admins" = {
+        description = "Manage the Authentik instance and its global configuration"
+        label       = "Authentik Admins"
+
+        members = {
+          non-production = ["brett@osinfra.io"]
+          production     = ["brett@osinfra.io"]
+          sandbox        = ["brett@osinfra.io"]
+        }
+      }
+      "openbao-secret-admins" = {
+        description = "Manage OpenBao secrets within the pt-pneuma team prefix"
+        label       = "OpenBao Secret Admins"
+
+        members = {
+          non-production = ["brett@osinfra.io"]
+          production     = ["brett@osinfra.io"]
+          sandbox        = ["brett@osinfra.io"]
+        }
+      }
+      "openbao-secret-readers" = {
+        description = "Read and list OpenBao secrets within the pt-pneuma team prefix"
+        label       = "OpenBao Secret Readers"
+
+        members = {
+          non-production = []
+          production     = []
+          sandbox        = []
+        }
+      }
+      "openbao-secret-writers" = {
+        description = "Create and update OpenBao secrets within the pt-pneuma team prefix"
+        label       = "OpenBao Secret Writers"
+
+        members = {
+          non-production = []
+          production     = []
+          sandbox        = []
+        }
+      }
+    }
+
     datadog_team_memberships = {
       admins  = ["brett@osinfra.io"]
       members = []
@@ -44,6 +97,24 @@ teams = {
         environments = {
           non-production = {
             name = "Non-Production: Main"
+            reviewers = {
+              teams = ["pt-pneuma-non-production-approvers"]
+            }
+          }
+          non-production-authentik-config = {
+            name = "Non-Production authentik Config"
+            reviewers = {
+              teams = ["pt-pneuma-non-production-approvers"]
+            }
+          }
+          non-production-authentik-us-east1-b = {
+            name = "Non-Production authentik: us-east1-b"
+            reviewers = {
+              teams = ["pt-pneuma-non-production-approvers"]
+            }
+          }
+          non-production-authentik-us-east4-a = {
+            name = "Non-Production authentik: us-east4-a"
             reviewers = {
               teams = ["pt-pneuma-non-production-approvers"]
             }
@@ -180,6 +251,18 @@ teams = {
               teams = ["pt-pneuma-non-production-approvers"]
             }
           }
+          non-production-openbao-us-east1-b = {
+            name = "Non-Production OpenBao: us-east1-b"
+            reviewers = {
+              teams = ["pt-pneuma-non-production-approvers"]
+            }
+          }
+          non-production-openbao-us-east4-a = {
+            name = "Non-Production OpenBao: us-east4-a"
+            reviewers = {
+              teams = ["pt-pneuma-non-production-approvers"]
+            }
+          }
           non-production-regional-us-east1-b = {
             name = "Non-Production: us-east1-b"
             reviewers = {
@@ -194,6 +277,48 @@ teams = {
           }
           production = {
             name = "Production: Main"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
+          production-authentik-config = {
+            name = "Production authentik Config"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
+          production-authentik-us-east1-b = {
+            name = "Production authentik: us-east1-b"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
+          production-authentik-us-east1-c = {
+            name = "Production authentik: us-east1-c"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
+          production-authentik-us-east1-d = {
+            name = "Production authentik: us-east1-d"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
+          production-authentik-us-east4-a = {
+            name = "Production authentik: us-east4-a"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
+          production-authentik-us-east4-b = {
+            name = "Production authentik: us-east4-b"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
+          production-authentik-us-east4-c = {
+            name = "Production authentik: us-east4-c"
             reviewers = {
               teams = ["pt-pneuma-production-approvers"]
             }
@@ -594,6 +719,42 @@ teams = {
               teams = ["pt-pneuma-production-approvers"]
             }
           }
+          production-openbao-us-east1-b = {
+            name = "Production OpenBao: us-east1-b"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
+          production-openbao-us-east1-c = {
+            name = "Production OpenBao: us-east1-c"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
+          production-openbao-us-east1-d = {
+            name = "Production OpenBao: us-east1-d"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
+          production-openbao-us-east4-a = {
+            name = "Production OpenBao: us-east4-a"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
+          production-openbao-us-east4-b = {
+            name = "Production OpenBao: us-east4-b"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
+          production-openbao-us-east4-c = {
+            name = "Production OpenBao: us-east4-c"
+            reviewers = {
+              teams = ["pt-pneuma-production-approvers"]
+            }
+          }
           production-regional-us-east1-b = {
             name = "Production: us-east1-b"
             reviewers = {
@@ -632,6 +793,48 @@ teams = {
           }
           sandbox = {
             name = "Sandbox: Main"
+            reviewers = {
+              teams = ["pt-pneuma-sandbox-approvers"]
+            }
+          }
+          sandbox-agentgateway-manifests-us-east1-b = {
+            name = "Sandbox agentgateway Manifests: us-east1-b"
+            reviewers = {
+              teams = ["pt-pneuma-sandbox-approvers"]
+            }
+          }
+          sandbox-agentgateway-manifests-us-east4-a = {
+            name = "Sandbox agentgateway Manifests: us-east4-a"
+            reviewers = {
+              teams = ["pt-pneuma-sandbox-approvers"]
+            }
+          }
+          sandbox-agentgateway-us-east1-b = {
+            name = "Sandbox agentgateway: us-east1-b"
+            reviewers = {
+              teams = ["pt-pneuma-sandbox-approvers"]
+            }
+          }
+          sandbox-agentgateway-us-east4-a = {
+            name = "Sandbox agentgateway: us-east4-a"
+            reviewers = {
+              teams = ["pt-pneuma-sandbox-approvers"]
+            }
+          }
+          sandbox-authentik-config = {
+            name = "Sandbox authentik Config"
+            reviewers = {
+              teams = ["pt-pneuma-sandbox-approvers"]
+            }
+          }
+          sandbox-authentik-us-east1-b = {
+            name = "Sandbox authentik: us-east1-b"
+            reviewers = {
+              teams = ["pt-pneuma-sandbox-approvers"]
+            }
+          }
+          sandbox-authentik-us-east4-a = {
+            name = "Sandbox authentik: us-east4-a"
             reviewers = {
               teams = ["pt-pneuma-sandbox-approvers"]
             }
@@ -768,6 +971,18 @@ teams = {
               teams = ["pt-pneuma-sandbox-approvers"]
             }
           }
+          sandbox-openbao-us-east1-b = {
+            name = "Sandbox OpenBao: us-east1-b"
+            reviewers = {
+              teams = ["pt-pneuma-sandbox-approvers"]
+            }
+          }
+          sandbox-openbao-us-east4-a = {
+            name = "Sandbox OpenBao: us-east4-a"
+            reviewers = {
+              teams = ["pt-pneuma-sandbox-approvers"]
+            }
+          }
           sandbox-regional-us-east1-b = {
             name = "Sandbox: us-east1-b"
             reviewers = {
@@ -805,6 +1020,7 @@ teams = {
 
       "pt-pneuma-istio-test" = {
         description                       = "Istio test application used to validate Istio service mesh configurations in the pt-pneuma Kubernetes platform."
+        enable_datadog_secrets            = true
         enable_google_wif_service_account = true
 
         topics = [
@@ -819,14 +1035,20 @@ teams = {
     }
 
     github_repository_labels = {
-      "copilot"      = { color = "6E40C9", description = "Copilot instructions, skills, hooks, and agents" }
-      "dependencies" = { color = "0075CA", description = "Pull requests that update a dependency file" }
-      "devex"        = { color = "84A255", description = "Developer experience, tooling, and local environment" }
-      "docs"         = { color = "0052CC", description = "Docusaurus documentation site or other markdown documentation" }
-      "nomos"        = { color = "FFB400", description = "Created by the Nomos agent" }
-      "opentofu"     = { color = "FEDA15", description = "OpenTofu infrastructure code" }
-      "scripts"      = { color = "FBCA04", description = "Generator and utility scripts" }
-      "security"     = { color = "B60205", description = "Driven by security requirements or hardening" }
+      "actions"       = { color = "000000", description = "GitHub Actions workflows and automation" }
+      "copilot"       = { color = "6E40C9", description = "Copilot instructions, skills, hooks, and agents" }
+      "dependencies"  = { color = "0075CA", description = "Pull requests that update a dependency file" }
+      "devex"         = { color = "84A255", description = "Developer experience, tooling, and local environment" }
+      "docker"        = { color = "0DB7ED", description = "Docker images and container configuration" }
+      "docs"          = { color = "25C2A0", description = "Docusaurus documentation site or other markdown documentation" }
+      "kubernetes"    = { color = "326CE5", description = "Kubernetes manifests, Helm charts, and cluster configuration" }
+      "misc"          = { color = "C5DEF5", description = "Miscellaneous work that does not fit another label" }
+      "nomos"         = { color = "FFB400", description = "Created by the Nomos agent" }
+      "observability" = { color = "632CA6", description = "Observability, monitoring, and alerting" }
+      "opentofu"      = { color = "FEDA15", description = "OpenTofu infrastructure code" }
+      "scripts"       = { color = "89E051", description = "Generator and utility scripts" }
+      "security"      = { color = "B60205", description = "Driven by security requirements or hardening" }
+      "tests"         = { color = "1D76DB", description = "Test coverage, test infrastructure, and evaluations" }
     }
 
     google_basic_groups_env_memberships = {
@@ -904,7 +1126,7 @@ teams = {
           writers = {
             managers = []
             members  = []
-            owners   = []
+            owners   = ["brett@osinfra.io"]
           }
         }
 
@@ -916,7 +1138,7 @@ teams = {
             enable_gke_hub_host = true
             node_pools = {
               default-pool = {
-                machine_type   = "e2-standard-2"
+                machine_type   = "e2-standard-4"
                 max_node_count = 1
                 min_node_count = 0
               }
@@ -932,7 +1154,7 @@ teams = {
           "us-east1-c" = {
             node_pools = {
               default-pool = {
-                machine_type   = "e2-standard-2"
+                machine_type   = "e2-standard-4"
                 max_node_count = 1
                 min_node_count = 0
               }
@@ -948,7 +1170,7 @@ teams = {
           "us-east1-d" = {
             node_pools = {
               default-pool = {
-                machine_type   = "e2-standard-2"
+                machine_type   = "e2-standard-4"
                 max_node_count = 1
                 min_node_count = 0
               }
@@ -964,7 +1186,7 @@ teams = {
           "us-east4-a" = {
             node_pools = {
               default-pool = {
-                machine_type   = "e2-standard-2"
+                machine_type   = "e2-standard-4"
                 max_node_count = 1
                 min_node_count = 0
               }
@@ -980,7 +1202,7 @@ teams = {
           "us-east4-b" = {
             node_pools = {
               default-pool = {
-                machine_type   = "e2-standard-2"
+                machine_type   = "e2-standard-4"
                 max_node_count = 1
                 min_node_count = 0
               }
@@ -996,7 +1218,7 @@ teams = {
           "us-east4-c" = {
             node_pools = {
               default-pool = {
-                machine_type   = "e2-standard-2"
+                machine_type   = "e2-standard-4"
                 max_node_count = 1
                 min_node_count = 0
               }
@@ -1016,7 +1238,16 @@ teams = {
 
             route_auth_policies = {
               "istio-test" = {
-                mode = "public"
+                mode = "browser"
+
+                public_paths = [
+                  "/istio-test/health",
+                  "/istio-test/metadata/*"
+                ]
+
+                required_groups = [
+                  "all"
+                ]
               }
             }
 

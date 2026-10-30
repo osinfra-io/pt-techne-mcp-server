@@ -6,14 +6,14 @@ Run `go run ./internal/schemadoc schema/team.schema.json docs/schema.md` to rege
 
 ## `authentik_groups`
 
-Team-owned Authentik application-access groups, keyed by stable RFC 1123 identifiers. Names are derived as <team-key>: <label>, for example pt-pneuma: agentgateway Admins. These groups never grant Authentik administrative privileges. Membership is explicit per environment and does not inherit team membership.
+Team-owned Authentik groups, keyed by stable RFC 1123 identifiers. Every team must declare OpenBao Admins, Readers, and Writers. Only pt-pneuma may declare agentgateway Admins or Authentik Admins; Authentik Admins grants global administrator privileges. Membership is explicit per environment and does not inherit team membership.
 
 - **type:** `object`
-- **required:** false
+- **required:** true
 
 ## `datadog_team_memberships`
 
-Datadog team memberships. admins manage the team; members have read-only access.
+Datadog team memberships. At least one team admin is required; admins manage the team. Ordinary members have read-only access and may be empty.
 
 - **type:** `object`
 - **required:** true
@@ -56,10 +56,10 @@ Enable GitHub Actions CI/CD integration. When true, creates a GCP service accoun
 
 ## `github_child_teams_memberships`
 
-GitHub child team memberships. The four standard teams (sandbox-approvers, non-production-approvers, production-approvers, repository-administrators) are always created; this block sets memberships and may add custom child teams.
+GitHub child team memberships. The four standard teams are required for every team, and every standard or custom child team must have at least one maintainer.
 
 - **type:** `object`
-- **required:** false
+- **required:** true
 
 ## `github_parent_team_memberships`
 
@@ -84,7 +84,7 @@ Per-team GitHub issue labels applied to all repositories owned by this team. Key
 
 ## `google_basic_groups_env_memberships`
 
-Per-environment Google Cloud Identity basic groups: admin, reader, writer. Binds each role directly to environment folders — no team-folder binding, no inheritance. Allows finer-grained access control than team-level groups (e.g. write in sandbox/non-production, read-only in production).
+Per-environment Google Cloud Identity basic groups: admin, reader, writer. Every role/environment group requires at least one owner. Binds each role directly to environment folders — no team-folder binding, no inheritance.
 
 - **type:** `object`
 - **required:** true

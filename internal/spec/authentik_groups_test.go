@@ -13,15 +13,15 @@ func TestAuthentikGroups(t *testing.T) {
 		groups string
 		valid  bool
 	}{
-		{"valid", `{"agentgateway-admins":{"description":"UI access","label":"agentgateway Admins","members":{"sandbox":["member@example.com"]}}}`, true},
-		{"no-members", `{"agentgateway-admins":{"description":"UI access","label":"agentgateway Admins"}}`, true},
-		{"duplicate-label", `{"a":{"description":"A","label":"agentgateway Admins"},"b":{"description":"B","label":"agentgateway Admins"}}`, false},
-		{"duplicate-member", `{"a":{"description":"A","label":"agentgateway Admins","members":{"sandbox":["a@example.com","a@example.com"]}}}`, false},
-		{"uppercase-email", `{"a":{"description":"A","label":"agentgateway Admins","members":{"sandbox":["A@example.com"]}}}`, false},
-		{"unknown-environment", `{"a":{"description":"A","label":"agentgateway Admins","members":{"prod":[]}}}`, false},
-		{"delimiter", `{"a":{"description":"A","label":"agentgateway|Admins"}}`, false},
-		{"leading-space", `{"a":{"description":"A","label":" agentgateway Admins"}}`, false},
-		{"invalid-key", `{"Admin":{"description":"A","label":"agentgateway Admins"}}`, false},
+		{"valid", `{"reports-admins":{"description":"UI access","label":"Reports Admins","members":{"sandbox":["member@example.com"]}}}`, true},
+		{"no-members", `{"reports-admins":{"description":"UI access","label":"Reports Admins"}}`, true},
+		{"duplicate-label", `{"a":{"description":"A","label":"OpenBao Secret Admins"},"b":{"description":"B","label":"OpenBao Secret Admins"}}`, false},
+		{"duplicate-member", `{"reports-admins":{"description":"A","label":"Reports Admins","members":{"sandbox":["a@example.com","a@example.com"]}}}`, false},
+		{"uppercase-email", `{"reports-admins":{"description":"A","label":"Reports Admins","members":{"sandbox":["A@example.com"]}}}`, false},
+		{"unknown-environment", `{"reports-admins":{"description":"A","label":"Reports Admins","members":{"prod":[]}}}`, false},
+		{"delimiter", `{"reports-admins":{"description":"A","label":"Reports|Admins"}}`, false},
+		{"leading-space", `{"reports-admins":{"description":"A","label":" Reports Admins"}}`, false},
+		{"invalid-key", `{"Admin":{"description":"A","label":"Reports Admins"}}`, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var input map[string]any
@@ -33,7 +33,10 @@ func TestAuthentikGroups(t *testing.T) {
 			if err := json.Unmarshal([]byte(tc.groups), &groups); err != nil {
 				t.Fatal(err)
 			}
-			input["authentik_groups"] = groups
+			baseGroups := input["authentik_groups"].(map[string]any)
+			for key, group := range groups.(map[string]any) {
+				baseGroups[key] = group
+			}
 			errs := v.Validate(input)
 			if (len(errs) == 0) != tc.valid {
 				t.Fatalf("valid=%v, errors=%v", tc.valid, errs)
@@ -49,10 +52,10 @@ func TestAuthentikGroupReferences(t *testing.T) {
 			name  string
 			valid bool
 		}{
-			{"pt-example: agentgateway Admins", true},
-			{"pt-other: agentgateway Admins", false},
-			{"pt-example: agentgateway Readers", false},
-			{"pt-example: Agentgateway Admins", false},
+			{"pt-example: Reports Admins", true},
+			{"pt-other: Reports Admins", false},
+			{"pt-example: Reports Readers", false},
+			{"pt-example: Reports Admin", false},
 			{"authentik Admin", true},
 			{"all", true},
 			{"authentik,Admin", false},
@@ -72,11 +75,10 @@ func TestAuthentikGroupReferences(t *testing.T) {
 				if err := json.Unmarshal([]byte(inputJSON), &input); err != nil {
 					t.Fatal(err)
 				}
-				input["authentik_groups"] = map[string]any{
-					"agentgateway-admins": map[string]any{
-						"description": "UI access",
-						"label":       "agentgateway Admins",
-					},
+				baseGroups := input["authentik_groups"].(map[string]any)
+				baseGroups["reports-admins"] = map[string]any{
+					"description": "Reports access",
+					"label":       "Reports Admins",
 				}
 				errs := v.Validate(input)
 				if (len(errs) == 0) != tc.valid {

@@ -15,13 +15,38 @@ import (
 func validSpec() map[string]any {
 	return map[string]any{
 		"team_key": "pt-example",
+		"authentik_groups": map[string]any{
+			"openbao-secret-admins": map[string]any{
+				"description": "Manage OpenBao secrets",
+				"label":       "OpenBao Secret Admins",
+				"members": map[string]any{
+					"sandbox":        []string{"a@b.com"},
+					"non-production": []string{"a@b.com"},
+					"production":     []string{"a@b.com"},
+				},
+			},
+			"openbao-secret-readers": map[string]any{
+				"description": "Read OpenBao secrets",
+				"label":       "OpenBao Secret Readers",
+			},
+			"openbao-secret-writers": map[string]any{
+				"description": "Write OpenBao secrets",
+				"label":       "OpenBao Secret Writers",
+			},
+		},
 		"datadog_team_memberships": map[string]any{
-			"admins": []string{"a@b.com"}, "members": []string{},
+			"admins": []string{"a@b.com"}, "members": []string{"a@b.com"},
 		},
 		"display_name":         "Example",
 		"display_name_comment": "An example team used in tests.",
 		"github_parent_team_memberships": map[string]any{
 			"maintainers": []string{"x"}, "members": []string{},
+		},
+		"github_child_teams_memberships": map[string]any{
+			"non-production-approvers":  map[string]any{"maintainers": []string{"x"}, "members": []string{}},
+			"production-approvers":      map[string]any{"maintainers": []string{"x"}, "members": []string{}},
+			"repository-administrators": map[string]any{"maintainers": []string{"x"}, "members": []string{}},
+			"sandbox-approvers":         map[string]any{"maintainers": []string{"x"}, "members": []string{}},
 		},
 		"google_basic_groups_env_memberships": map[string]any{
 			"admin": map[string]any{
