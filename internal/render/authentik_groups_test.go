@@ -23,6 +23,7 @@ func TestAuthentikGroupsRoundTrip(t *testing.T) {
 				"sandbox":        {"member@example.com"},
 			},
 		},
+		"openbao-secret-readers": {},
 	}
 	team := &spec.Team{TeamKey: "pt-example", AuthentikGroups: groups}
 	rendered, err := Render(team)
@@ -38,5 +39,8 @@ func TestAuthentikGroupsRoundTrip(t *testing.T) {
 	}
 	if !strings.Contains(string(rendered), `label       = "agentgateway Admins"`) {
 		t.Fatal("renderer changed application branding")
+	}
+	if strings.Contains(string(rendered), `description = ""`) || strings.Contains(string(rendered), `label       = ""`) {
+		t.Fatal("renderer emitted empty fixed OpenBao metadata")
 	}
 }

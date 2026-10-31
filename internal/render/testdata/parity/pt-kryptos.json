@@ -2,8 +2,6 @@
     "team_key": "pt-kryptos",
     "authentik_groups": {
         "openbao-secret-admins": {
-            "description": "Manage OpenBao secrets",
-            "label": "OpenBao Secret Admins",
             "members": {
                 "non-production": [
                     "brett@osinfra.io"
@@ -16,14 +14,8 @@
                 ]
             }
         },
-        "openbao-secret-readers": {
-            "description": "Read OpenBao secrets",
-            "label": "OpenBao Secret Readers"
-        },
-        "openbao-secret-writers": {
-            "description": "Write OpenBao secrets",
-            "label": "OpenBao Secret Writers"
-        }
+        "openbao-secret-readers": {},
+        "openbao-secret-writers": {}
     },
     "datadog_team_memberships": {
         "admins": [

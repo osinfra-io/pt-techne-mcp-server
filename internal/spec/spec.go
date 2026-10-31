@@ -29,8 +29,8 @@ type Team struct {
 }
 
 type AuthentikGroup struct {
-	Description string              `json:"description"`
-	Label       string              `json:"label"`
+	Description string              `json:"description,omitempty"`
+	Label       string              `json:"label,omitempty"`
 	Members     map[string][]string `json:"members,omitempty"`
 }
 

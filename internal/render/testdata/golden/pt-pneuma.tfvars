@@ -22,9 +22,6 @@ teams = {
         }
       }
       "openbao-secret-admins" = {
-        description = "Manage OpenBao secrets within the pt-pneuma team prefix"
-        label       = "OpenBao Secret Admins"
-
         members = {
           non-production = ["brett@osinfra.io"]
           production     = ["brett@osinfra.io"]
@@ -32,9 +29,6 @@ teams = {
         }
       }
       "openbao-secret-readers" = {
-        description = "Read and list OpenBao secrets within the pt-pneuma team prefix"
-        label       = "OpenBao Secret Readers"
-
         members = {
           non-production = []
           production     = []
@@ -42,9 +36,6 @@ teams = {
         }
       }
       "openbao-secret-writers" = {
-        description = "Create and update OpenBao secrets within the pt-pneuma team prefix"
-        label       = "OpenBao Secret Writers"
-
         members = {
           non-production = []
           production     = []

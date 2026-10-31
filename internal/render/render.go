@@ -138,12 +138,18 @@ func emitAuthentikGroups(w *writer, groups map[string]spec.AuthentikGroup) {
 		group := groups[key]
 		w2.line(quote(key) + " = {")
 		w3 := nested(w2)
-		w3.aligned([][2]string{
-			{"description", quote(group.Description)},
-			{"label", quote(group.Label)},
-		})
+		var attributes [][2]string
+		if group.Description != "" {
+			attributes = append(attributes, [2]string{"description", quote(group.Description)})
+		}
+		if group.Label != "" {
+			attributes = append(attributes, [2]string{"label", quote(group.Label)})
+		}
+		w3.aligned(attributes)
 		if len(group.Members) > 0 {
-			w3.blank()
+			if len(attributes) > 0 {
+				w3.blank()
+			}
 			w3.line("members = {")
 			w4 := nested(w3)
 			var rows [][2]string

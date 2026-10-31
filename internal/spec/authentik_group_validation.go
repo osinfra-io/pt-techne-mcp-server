@@ -14,6 +14,14 @@ func validateAuthentikGroups(spec any) []ValidationError {
 	for _, key := range sortedSpecKeys(groups) {
 		group, _ := groups[key].(map[string]any)
 		label, _ := group["label"].(string)
+		switch key {
+		case "openbao-secret-admins":
+			label = "OpenBao Secret Admins"
+		case "openbao-secret-readers":
+			label = "OpenBao Secret Readers"
+		case "openbao-secret-writers":
+			label = "OpenBao Secret Writers"
+		}
 		name := teamKey + ": " + label
 		if names[name] {
 			errs = append(errs, ValidationError{
