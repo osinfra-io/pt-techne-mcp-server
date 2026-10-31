@@ -15,6 +15,8 @@ func TestAuthentikGroups(t *testing.T) {
 	}{
 		{"valid", `{"reports-admins":{"description":"UI access","label":"Reports Admins","members":{"sandbox":["member@example.com"]}}}`, true},
 		{"no-members", `{"reports-admins":{"description":"UI access","label":"Reports Admins"}}`, true},
+		{"openbao-fixed-membership", `{"openbao-secret-readers":{"members":{"sandbox":["member@example.com"]}}}`, true},
+		{"openbao-fixed-metadata", `{"openbao-secret-readers":{"description":"Custom","label":"Custom Readers"}}`, false},
 		{"duplicate-label", `{"a":{"description":"A","label":"OpenBao Secret Admins"},"b":{"description":"B","label":"OpenBao Secret Admins"}}`, false},
 		{"duplicate-member", `{"reports-admins":{"description":"A","label":"Reports Admins","members":{"sandbox":["a@example.com","a@example.com"]}}}`, false},
 		{"uppercase-email", `{"reports-admins":{"description":"A","label":"Reports Admins","members":{"sandbox":["A@example.com"]}}}`, false},
@@ -53,6 +55,7 @@ func TestAuthentikGroupReferences(t *testing.T) {
 			valid bool
 		}{
 			{"pt-example: Reports Admins", true},
+			{"pt-example: OpenBao Secret Readers", true},
 			{"pt-other: Reports Admins", false},
 			{"pt-example: Reports Readers", false},
 			{"pt-example: Reports Admin", false},

@@ -15,16 +15,14 @@ func minimalValid() string {
 		"team_key": "pt-example",
 		"authentik_groups": {
 			"openbao-secret-admins": {
-				"description": "Manage OpenBao secrets",
-				"label": "OpenBao Secret Admins",
 				"members": {
 					"non-production": ["a@b.com"],
 					"production": ["a@b.com"],
 					"sandbox": ["a@b.com"]
 				}
 			},
-			"openbao-secret-readers": {"description": "Read OpenBao secrets", "label": "OpenBao Secret Readers"},
-			"openbao-secret-writers": {"description": "Write OpenBao secrets", "label": "OpenBao Secret Writers"}
+			"openbao-secret-readers": {},
+			"openbao-secret-writers": {}
 		},
 		"datadog_team_memberships": {"admins": ["a@b.com"], "members": []},
 		"display_name": "Example",

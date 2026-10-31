@@ -17,22 +17,14 @@ func validSpec() map[string]any {
 		"team_key": "pt-example",
 		"authentik_groups": map[string]any{
 			"openbao-secret-admins": map[string]any{
-				"description": "Manage OpenBao secrets",
-				"label":       "OpenBao Secret Admins",
 				"members": map[string]any{
 					"sandbox":        []string{"a@b.com"},
 					"non-production": []string{"a@b.com"},
 					"production":     []string{"a@b.com"},
 				},
 			},
-			"openbao-secret-readers": map[string]any{
-				"description": "Read OpenBao secrets",
-				"label":       "OpenBao Secret Readers",
-			},
-			"openbao-secret-writers": map[string]any{
-				"description": "Write OpenBao secrets",
-				"label":       "OpenBao Secret Writers",
-			},
+			"openbao-secret-readers": map[string]any{},
+			"openbao-secret-writers": map[string]any{},
 		},
 		"datadog_team_memberships": map[string]any{
 			"admins": []string{"a@b.com"}, "members": []string{"a@b.com"},

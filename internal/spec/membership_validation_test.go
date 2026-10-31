@@ -43,15 +43,14 @@ func TestEmbeddedSchemaRequiresPneumaAdministrator(t *testing.T) {
 		},
 		"authentik_groups": {
 			"openbao-secret-admins": {
-				"description": "Manage team secrets", "label": "OpenBao Secret Admins",
 				"members": {
 					"sandbox": ["admin@osinfra.io"],
 					"non-production": ["admin@osinfra.io"],
 					"production": ["admin@osinfra.io"]
 				}
 			},
-			"openbao-secret-readers": {"description": "Read team secrets", "label": "OpenBao Secret Readers"},
-			"openbao-secret-writers": {"description": "Write team secrets", "label": "OpenBao Secret Writers"},
+			"openbao-secret-readers": {},
+			"openbao-secret-writers": {},
 			"agentgateway-admins": {"description": "Manage agentgateway", "label": "agentgateway Admins"},
 			"authentik-admins": {
 				"description": "Manage authentik", "label": "authentik Admins",

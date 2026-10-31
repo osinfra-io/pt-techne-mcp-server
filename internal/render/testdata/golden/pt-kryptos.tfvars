@@ -2,9 +2,6 @@ teams = {
   pt-kryptos = {
     authentik_groups = {
       "openbao-secret-admins" = {
-        description = "Manage OpenBao secrets"
-        label       = "OpenBao Secret Admins"
-
         members = {
           non-production = ["brett@osinfra.io"]
           production     = ["brett@osinfra.io"]
@@ -12,12 +9,8 @@ teams = {
         }
       }
       "openbao-secret-readers" = {
-        description = "Read OpenBao secrets"
-        label       = "OpenBao Secret Readers"
       }
       "openbao-secret-writers" = {
-        description = "Write OpenBao secrets"
-        label       = "OpenBao Secret Writers"
       }
     }
 

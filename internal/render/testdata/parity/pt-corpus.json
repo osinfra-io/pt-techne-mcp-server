@@ -1,8 +1,6 @@
 {
     "authentik_groups": {
         "openbao-secret-admins": {
-            "description": "Manage secrets and versions within the pt-corpus team prefix",
-            "label": "OpenBao Secret Admins",
             "members": {
                 "non-production": [
                     "brett@osinfra.io"
@@ -16,8 +14,6 @@
             }
         },
         "openbao-secret-readers": {
-            "description": "Read and list secrets within the pt-corpus team prefix",
-            "label": "OpenBao Secret Readers",
             "members": {
                 "non-production": [],
                 "production": [],
@@ -25,8 +21,6 @@
             }
         },
         "openbao-secret-writers": {
-            "description": "Create and update secrets within the pt-corpus team prefix",
-            "label": "OpenBao Secret Writers",
             "members": {
                 "non-production": [],
                 "production": [],
