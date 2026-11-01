@@ -21,7 +21,6 @@ type Team struct {
 	GoogleBasicGroupsEnvMemberships GoogleBasicGroupsEnvMemberships  `json:"google_basic_groups_env_memberships"`
 	GoogleBrowserGroups             *EnvScopedGoogleGroups           `json:"google_browser_groups_memberships,omitempty"`
 	GoogleProjectCreatorGroups      *EnvScopedGoogleGroups           `json:"google_project_creator_groups_memberships,omitempty"`
-	GoogleProjectEnableDatadog      *bool                            `json:"google_project_enable_datadog,omitempty"`
 	GoogleProjectServices           []string                         `json:"google_project_services,omitempty"`
 	GoogleXPNAdminGroups            *EnvScopedGoogleGroups           `json:"google_xpn_admin_groups_memberships,omitempty"`
 	PlatformManagedProject          *PlatformManagedProject          `json:"platform_managed_project,omitempty"`
@@ -65,7 +64,6 @@ type EnvScopedGoogleGroups struct {
 type GitHubRepository struct {
 	Description                   string                       `json:"description"`
 	EnableDatadogSecrets          *bool                        `json:"enable_datadog_secrets,omitempty"`
-	EnableDatadogWebhook          *bool                        `json:"enable_datadog_webhook,omitempty"`
 	EnableGoogleWIFServiceAccount *bool                        `json:"enable_google_wif_service_account,omitempty"`
 	EnableRuleset                 *bool                        `json:"enable_ruleset,omitempty"`
 	Environments                  map[string]GitHubEnvironment `json:"environments,omitempty"`
@@ -106,7 +104,6 @@ type GitHubPagesSource struct {
 
 type PlatformManagedProject struct {
 	CloudSQL         map[string]CloudSQL `json:"cloud_sql,omitempty"`
-	EnableDatadog    *bool               `json:"enable_datadog,omitempty"`
 	KubernetesEngine *KubernetesEngine   `json:"kubernetes_engine,omitempty"`
 }
 
@@ -119,7 +116,6 @@ type CloudSQL struct {
 type KubernetesEngine struct {
 	ArtifactRegistryGroups *ArtifactRegistryGroups `json:"artifact_registry_groups_memberships,omitempty"`
 	DNSSubdomain           string                  `json:"dns_subdomain,omitempty"`
-	EnableDatadogAPM       *bool                   `json:"enable_datadog_apm,omitempty"`
 	Locations              map[string]GKELocation  `json:"locations"`
 	Namespaces             map[string]GKENamespace `json:"namespaces,omitempty"`
 }

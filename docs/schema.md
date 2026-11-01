@@ -103,13 +103,6 @@ Google Cloud Identity group memberships scoped to deployment environments. Each 
 - **type:** `object`
 - **required:** false
 
-## `google_project_enable_datadog`
-
-Enable Datadog Google Cloud integration for the team project.
-
-- **type:** `boolean`
-- **required:** false
-
 ## `google_project_services`
 
 Additional GCP API services to enable in the team project.

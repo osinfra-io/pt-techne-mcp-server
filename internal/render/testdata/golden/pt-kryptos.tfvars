@@ -53,7 +53,6 @@ teams = {
       "pt-kryptos" = {
         description                       = "The hidden foundation of platform security — managing cryptographic primitives, secrets infrastructure, and security controls that underpin all teams on the platform."
         enable_datadog_secrets            = true
-        enable_datadog_webhook            = true
         enable_google_wif_service_account = true
 
         environments = {
@@ -175,11 +174,7 @@ teams = {
       }
     }
 
-    google_project_enable_datadog = true
-
     platform_managed_project = {
-      enable_datadog = true
-
       kubernetes_engine = {
         artifact_registry_groups_memberships = {
           readers = {
