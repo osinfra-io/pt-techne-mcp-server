@@ -107,11 +107,6 @@ func emitTeamBody(w *writer, t *spec.Team) {
 			emitEnvScopedGroups(w, "google_project_creator_groups_memberships", *t.GoogleProjectCreatorGroups)
 		})
 	}
-	if t.GoogleProjectEnableDatadog != nil {
-		emit(func() {
-			w.line("google_project_enable_datadog = " + boolStr(*t.GoogleProjectEnableDatadog))
-		})
-	}
 	if len(t.GoogleProjectServices) > 0 {
 		emit(func() { emitMultilineStringList(w, "google_project_services", t.GoogleProjectServices) })
 	}
@@ -273,9 +268,6 @@ func emitRepoBody(w *writer, r spec.GitHubRepository) {
 	if r.EnableDatadogSecrets != nil {
 		rows = append(rows, [2]string{"enable_datadog_secrets", boolStr(*r.EnableDatadogSecrets)})
 	}
-	if r.EnableDatadogWebhook != nil {
-		rows = append(rows, [2]string{"enable_datadog_webhook", boolStr(*r.EnableDatadogWebhook)})
-	}
 	if r.EnableGoogleWIFServiceAccount != nil {
 		rows = append(rows, [2]string{"enable_google_wif_service_account", boolStr(*r.EnableGoogleWIFServiceAccount)})
 	}
@@ -411,9 +403,6 @@ func emitPlatformManagedProject(w *writer, p spec.PlatformManagedProject) {
 	if len(p.CloudSQL) > 0 {
 		em(func() { emitCloudSQL(w, p.CloudSQL) })
 	}
-	if p.EnableDatadog != nil {
-		em(func() { w.line("enable_datadog = " + boolStr(*p.EnableDatadog)) })
-	}
 	if p.KubernetesEngine != nil {
 		em(func() { emitKubernetesEngine(w, *p.KubernetesEngine) })
 	}
@@ -470,13 +459,10 @@ func emitKubernetesEngine(w *writer, k spec.KubernetesEngine) {
 		})
 	}
 
-	// dns_subdomain + enable_datadog_apm aligned
+	// dns_subdomain aligned
 	var rows [][2]string
 	if k.DNSSubdomain != "" {
 		rows = append(rows, [2]string{"dns_subdomain", quote(k.DNSSubdomain)})
-	}
-	if k.EnableDatadogAPM != nil {
-		rows = append(rows, [2]string{"enable_datadog_apm", boolStr(*k.EnableDatadogAPM)})
 	}
 	if len(rows) > 0 {
 		em(func() { w.alignedTop(rows) })
