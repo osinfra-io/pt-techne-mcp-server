@@ -12,7 +12,7 @@ permissions:
 jobs:
   release:
     name: Release
-    uses: osinfra-io/pt-techne-misc-workflows/.github/workflows/release.yml@08a1f8d55cb21e733dc36c5abe3cb0b277114697  # v0.2.9
+    uses: osinfra-io/pt-techne-misc-workflows/.github/workflows/release.yml@873e5eb069348e446ddc20c9c96661073d4bec42  # v0.3.5
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -82,7 +82,7 @@ jobs:
       # https://github.com/marketplace/actions/docker-login
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6  # v4.7.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550  # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
